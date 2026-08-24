@@ -1,0 +1,77 @@
+buildscript {
+  ext.TiktokBusinessReactNativeSdk = [
+    kotlinVersion: "2.0.21",
+    minSdkVersion: 24,
+    compileSdkVersion: 36,
+    targetSdkVersion: 36,
+    tiktokBusinessSdkVersion: "1.7.0",
+    lifecycleVersion: "2.8.7",
+    billingVersion: "7.1.1",
+    installReferrerVersion: "2.2"
+  ]
+
+  ext.getExtOrDefault = { prop ->
+    if (rootProject.ext.has(prop)) {
+      return rootProject.ext.get(prop)
+    }
+
+    return TiktokBusinessReactNativeSdk[prop]
+  }
+
+  repositories {
+    google()
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath "com.android.tools.build:gradle:8.7.2"
+    // noinspection DifferentKotlinGradleVersion
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${getExtOrDefault('kotlinVersion')}"
+  }
+}
+
+
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
+
+apply plugin: "com.facebook.react"
+
+android {
+  namespace "com.tiktokbusinessreactnativesdk"
+
+  compileSdkVersion getExtOrDefault("compileSdkVersion")
+
+  defaultConfig {
+    minSdkVersion getExtOrDefault("minSdkVersion")
+    targetSdkVersion getExtOrDefault("targetSdkVersion")
+  }
+
+  buildFeatures {
+    buildConfig true
+  }
+
+  buildTypes {
+    release {
+      minifyEnabled false
+    }
+  }
+
+  lint {
+    disable "GradleCompatible"
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+}
+
+dependencies {
+  implementation "com.facebook.react:react-android"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:${getExtOrDefault('kotlinVersion')}"
+  implementation "com.github.tiktok:tiktok-business-android-sdk:${getExtOrDefault('tiktokBusinessSdkVersion')}"
+  implementation "androidx.lifecycle:lifecycle-process:${getExtOrDefault('lifecycleVersion')}"
+  implementation "androidx.lifecycle:lifecycle-common-java8:${getExtOrDefault('lifecycleVersion')}"
+  implementation "com.android.billingclient:billing:${getExtOrDefault('billingVersion')}"
+  implementation "com.android.installreferrer:installreferrer:${getExtOrDefault('installReferrerVersion')}"
+}

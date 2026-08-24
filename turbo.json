@@ -1,0 +1,145 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [
+    ".nvmrc",
+    ".npmrc",
+    "pnpm-lock.yaml",
+    "babel.config.js",
+    "eslint.config.mjs",
+    "tsconfig.json",
+    "tsconfig.build.json",
+    "package.json",
+    "example/package.json"
+  ],
+  "globalEnv": ["NODE_ENV"],
+  "tasks": {
+    "//#lint:root": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "ios/**",
+        "android/**",
+        "example/src/**",
+        "example/package.json",
+        "package.json",
+        "eslint.config.mjs"
+      ],
+      "outputs": []
+    },
+    "//#typecheck:root": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "tsconfig.json",
+        "tsconfig.build.json",
+        "package.json"
+      ],
+      "outputs": []
+    },
+    "//#test:root": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/__tests__/**",
+        "package.json"
+      ],
+      "outputs": []
+    },
+    "//#build:root": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "package.json",
+        "tsconfig.build.json",
+        "babel.config.js"
+      ],
+      "outputs": ["lib/**"]
+    },
+    "check": {
+      "inputs": [
+        "package.json",
+        "pnpm-lock.yaml",
+        "babel.config.js",
+        "eslint.config.mjs",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "package.json",
+        "!lib/**"
+      ],
+      "outputs": []
+    },
+    "start": {
+      "cache": false,
+      "persistent": true
+    },
+    "ios": {
+      "cache": false
+    },
+    "android": {
+      "cache": false
+    },
+    "build": {
+      "inputs": [
+        "package.json",
+        "pnpm-lock.yaml",
+        "babel.config.js",
+        "tsconfig.build.json",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "!src/**/*.test.ts",
+        "!src/**/*.test.tsx"
+      ],
+      "outputs": ["lib/**"]
+    },
+    "build:ios": {
+      "dependsOn": ["//#build:root"],
+      "env": [
+        "RCT_NEW_ARCH_ENABLED",
+        "RCT_REMOVE_LEGACY_ARCH",
+        "RCT_USE_RN_DEP",
+        "RCT_USE_PREBUILT_RNCORE"
+      ],
+      "inputs": [
+        "package.json",
+        "pnpm-lock.yaml",
+        "babel.config.js",
+        "tsconfig.json",
+        "tsconfig.build.json",
+        "*.podspec",
+        "ios/**",
+        "example/package.json",
+        "example/ios/**",
+        "!example/ios/build/**",
+        "!example/ios/Pods/**",
+        "src/**/*.ts",
+        "src/**/*.tsx"
+      ],
+      "outputs": []
+    },
+    "build:android": {
+      "dependsOn": ["//#build:root"],
+      "env": ["ANDROID_HOME", "ORG_GRADLE_PROJECT_newArchEnabled"],
+      "inputs": [
+        "package.json",
+        "pnpm-lock.yaml",
+        "babel.config.js",
+        "tsconfig.json",
+        "tsconfig.build.json",
+        "android/**",
+        "!android/build/**",
+        "example/package.json",
+        "example/android/**",
+        "!example/android/.gradle/**",
+        "!example/android/build/**",
+        "!example/android/app/build/**",
+        "src/**/*.ts",
+        "src/**/*.tsx"
+      ],
+      "outputs": []
+    }
+  }
+}
