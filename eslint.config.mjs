@@ -24,6 +24,18 @@ export default defineConfig([
     },
   },
   {
-    ignores: ['node_modules/', 'lib/', '.claude/', '.codex/', '.ttadk/'],
+    ignores: [
+      'node_modules/',
+      'lib/',
+      'coverage/',
+      '.turbo/',
+      'example/android/app/build/',
+      'example/android/build/',
+      'example/ios/build/',
+      'example/ios/Pods/',
+      'example/vendor/',
+      '.claude/',
+      '.codex/',
+    ],
   },
 ]);

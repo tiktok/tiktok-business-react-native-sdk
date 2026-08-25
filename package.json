@@ -44,8 +44,8 @@
     "test": "turbo run test:root --continue=never",
     "check": "turbo run lint:root typecheck:root test:root --continue=never",
     "build": "turbo run build:root --continue=never",
-    "build:ios": "turbo run build:root build:ios --continue=never",
-    "build:android": "turbo run build:root build:android --continue=never",
+    "build:ios": "turbo run build:ios --filter=tiktok-business-react-native-sdk-example --continue=never",
+    "build:android": "turbo run build:android --filter=tiktok-business-react-native-sdk-example --continue=never",
     "release:prepare": "turbo run lint:root typecheck:root test:root build:root --continue=never",
     "lint:root": "eslint \"**/*.{js,ts,tsx}\"",
     "typecheck:root": "tsc",
@@ -150,8 +150,7 @@
     ],
     "testPathIgnorePatterns": [
       "<rootDir>/.claude/",
-      "<rootDir>/.codex/",
-      "<rootDir>/.ttadk/"
+      "<rootDir>/.codex/"
     ]
   },
   "commitlint": {
