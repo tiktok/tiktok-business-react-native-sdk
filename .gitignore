@@ -78,6 +78,5 @@ android/generated
 nitrogen/
 log/
 log/app.log
-.ttadk/
-specs/doc_export/
 /.pnpm-store
+coverage/
