@@ -4,7 +4,7 @@ import type {
   JsonObject,
   TikTokBusinessInitializeConfig,
   TrackAdRevenueEventOptions,
-} from '@tiktok-business/react-native-sdk';
+} from '@tiktok-for-business/react-native-sdk';
 
 function isPlainObject(value: unknown): value is JsonObject {
   return Object.prototype.toString.call(value) === '[object Object]';

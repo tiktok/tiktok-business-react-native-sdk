@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a pnpm workspace for the `@tiktok-business/react-native-sdk` React Native library. Core TypeScript lives in `src/`, with the TurboModule spec in `src/NativeTiktokBusinessReactNativeSdk.ts` and public exports in `src/index.tsx`. Native implementations live in `android/src/main/java/com/tiktokbusinessreactnativesdk/` and `ios/`. The runnable sample app is under `example/`, including `example/src/`, `example/android/`, and `example/ios/`. Generated build output goes to `lib/`, `build/`, and platform build directories; do not edit generated files directly. Project docs are in `docs/`.
+This is a pnpm workspace for the `@tiktok-for-business/react-native-sdk` React Native library. Core TypeScript lives in `src/`, with the TurboModule spec in `src/NativeTiktokBusinessReactNativeSdk.ts` and public exports in `src/index.tsx`. Native implementations live in `android/src/main/java/com/tiktokbusinessreactnativesdk/` and `ios/`. The runnable sample app is under `example/`, including `example/src/`, `example/android/`, and `example/ios/`. Generated build output goes to `lib/`, `build/`, and platform build directories; do not edit generated files directly. Project docs are in `docs/`.
 
 ## Build, Test, and Development Commands
 

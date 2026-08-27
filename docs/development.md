@@ -1,147 +1,124 @@
 # Development Guide
 
-This guide covers the local development flow for `@tiktok-business/react-native-sdk`.
+This guide covers local development for `@tiktok-for-business/react-native-sdk`.
 
 ## Prerequisites
 
-- Node.js matching `.nvmrc`
-- pnpm matching the `packageManager` field in `package.json`
-- Xcode and CocoaPods for iOS example validation
-- Android Studio, Android SDK, and JDK 17 for Android example validation
+- Node.js matching `.nvmrc` (`v22`)
+- pnpm matching `packageManager` in `package.json`
+- Xcode and CocoaPods/Bundler for iOS
+- Android Studio, Android SDK, and JDK 17 for Android
 
 ## Install dependencies
 
-From the repository root:
-
 ```sh
-pnpm install
+nvm use
+pnpm install --frozen-lockfile
 ```
 
-The workspace uses pnpm with hoisted node modules for React Native compatibility.
+The pnpm workspace contains the library root and `example/`. Hoisted node modules are enabled for React Native compatibility.
 
-## Codegen and native bridge shape
+## Source layout and Codegen
 
-The TurboModule contract lives in `src/NativeTiktokBusinessReactNativeSdk.ts` and is consumed by React Native Codegen through the `codegenConfig` in `package.json`.
+- Public exports: `src/index.ts`
+- Shared wrappers: `src/sdk.ts`
+- iOS wrappers: `src/ios.ts`
+- Android wrappers: `src/android.ts`
+- Main TurboModule spec: `src/NativeTiktokBusinessReactNativeSdk.ts`
+- iOS StoreKit TurboModule spec: `src/NativeTiktokBusinessReactNativeStoreKitIOS.ts`
+- Android implementation: `android/src/main/java/com/tiktokbusinessreactnativesdk/`
+- iOS implementation: `ios/`
 
-When changing native method signatures:
+When changing a native method, keep the TypeScript wrapper, Codegen spec, native implementation, tests, Example App actions, and `docs/api.md` aligned. Reinstall iOS pods after Codegen-facing changes.
 
-1. Update `src/NativeTiktokBusinessReactNativeSdk.ts`.
-2. Update the public wrappers in `src/sdk.ts`, `src/ios.ts`, or `src/android.ts`.
-3. Update both native implementations so each platform satisfies the generated spec.
-4. Reinstall pods for iOS example validation if generated iOS headers change.
-
-## Build the library
-
-Build the distributable JavaScript and TypeScript output with Bob:
-
-```sh
-pnpm prepare
-```
-
-Equivalent root script:
-
-```sh
-pnpm build
-```
-
-Generated output is written under `lib/`.
-
-## Tests and static checks
-
-Run lint:
+## Library validation
 
 ```sh
 pnpm lint
-```
-
-Run TypeScript checks:
-
-```sh
 pnpm typecheck
-```
-
-Run unit tests:
-
-```sh
 pnpm test
-```
-
-Run the combined root check:
-
-```sh
 pnpm check
-```
-
-Documentation consistency is manually verified during review by comparing `README.md`, `docs/api.md`, `docs/architecture.md`, and `docs/troubleshooting.md` against the public TypeScript API and native bridge method list.
-
-## Package validation
-
-Verify npm package contents before publishing:
-
-```sh
+pnpm build
 pnpm package:validate
 ```
 
-This runs `pnpm pack --dry-run` and prints the files that would be included in the tarball.
+`pnpm build` runs version synchronization and Bob, writing ESM and declarations to `lib/`. `pnpm package:validate` shows the npm tarball without publishing it. `pnpm release:prepare` combines lint, typecheck, tests, and library build.
 
-## Example App manual golden paths
+## Example App dependency modes
 
-Use sample runtime credentials only. Validate these paths after API, native bridge, or example UI changes:
+The committed Example App uses:
 
-1. Initialize with `appId`, `accessToken`, and `tiktokAppId`, including a `string[]` `tiktokAppId` when validating multiple TikTok App IDs.
-2. Initialize with top-level tracking controls disabled, such as `disableTrack`, `disableAutoTrack`, and `disablePayTrack`.
-3. Track one standard event, one content event, one custom event, one ad revenue event, and call `flush()`.
-4. Call `identify(payload)` and `logout()` with sample Advanced Matching values.
-5. Enable debug mode and verbose logging only for development or QA, then disable them before release.
-6. Use TikTok Test Events or the native SDK validation workflow to confirm events are received.
+```json
+"@tiktok-for-business/react-native-sdk": "workspace:*"
+```
 
-## Android example
+This is the development mode and validates the current checkout. To smoke-test an already published artifact, temporarily set an exact npm version such as:
 
-Run the example app on Android:
+```json
+"@tiktok-for-business/react-native-sdk": "0.1.0-dev.<sha>"
+```
+
+Run `pnpm install`, inspect the resolved package under `node_modules`, validate both platforms, then restore `workspace:*` before committing unless the repository intentionally changes its test strategy.
+
+## Android Example
+
+Build or launch:
 
 ```sh
+pnpm build:android
 pnpm example:android
 ```
 
-Build the Android example for validation:
+The CI build targets `arm64-v8a` and uses plain Gradle output. For runtime validation:
 
-```sh
-pnpm --filter tiktok-business-react-native-sdk-example build:android
-```
+1. Start an Android Studio emulator.
+2. Start Metro with `pnpm example:start`.
+3. Run `pnpm example:android`.
+4. Enter sample credentials at runtime and call `initialize`.
+5. Exercise standard/content/custom/ad-revenue events, identity, flush, logout, deferred deeplink, and Android purchase only when valid Billing payloads exist.
 
-On Android, also validate `trackGooglePlayPurchase` only when Google Play Billing purchase and SKU detail payloads are available. Avoid duplicate Purchase reporting when automatic IAP tracking is enabled.
+For a proxy running on the host Mac, Android Emulator reaches it through `10.0.2.2`, not `127.0.0.1`. The Example App has a Debug-only network security config for user-installed CA certificates.
 
-The Android example resolves the TikTok Business Android SDK from JitPack. If dependency resolution fails in a host app, ensure `https://jitpack.io`, Java 8 compile options, TikTok Business SDK, Lifecycle, Billing, and Install Referrer dependencies are available in the Android app-level Gradle configuration.
+## iOS Example
 
-## iOS example
-
-Install CocoaPods dependencies:
+Install gems and pods:
 
 ```sh
 cd example
 bundle install
 bundle exec pod install --project-directory=ios
+cd ..
 ```
 
-Run the example app on iOS:
+Build or launch from the repository root:
 
 ```sh
+pnpm build:ios
 pnpm example:ios
 ```
 
-Build the iOS example for validation:
+The iOS build uses the standard React Native CocoaPods source build. A cold CI build can take several minutes because React Native and its native dependencies must be compiled. Turborepo can skip the task when its inputs are unchanged.
 
-```sh
-pnpm --filter tiktok-business-react-native-sdk-example build:ios
-```
+If you need unformatted compiler logs locally, run the React Native command with `--verbose` or invoke `xcodebuild` from `example/ios`.
 
-On iOS, also validate `requestTrackingAuthorization()` only after the example host app has `NSUserTrackingUsageDescription`, and validate `ios.disableSKAdNetworkSupport` when SKAN conversion updates are owned outside the SDK.
+## Manual golden path
 
-If Xcode reports that an iOS platform is not installed, install the matching simulator runtime from Xcode Settings > Components and rerun the build.
+Use sample runtime credentials only:
 
-## Troubleshooting entry points
+1. Initialize with `appId`, `accessToken`, and one or more `tiktokAppId` values.
+2. Validate startup switches such as `disableAutoTrack`, `disablePayTrack`, and privacy/platform options.
+3. Track one standard, content, custom, and ad-revenue event.
+4. Run `identify`, `flush`, `logout`, and `fetchDeferredDeeplink`.
+5. On iOS, validate ATT and StoreKit 2 purchase-failure behavior where supported.
+6. On Android, validate Google Play purchase only with real purchase/SKU payloads.
+7. Confirm requests/responses with TikTok Test Events, native logs, or an HTTPS proxy; disable debug logging afterward.
 
-- API behavior and native mappings: `docs/api.md`
-- Architecture and bridge boundaries: `docs/architecture.md`
-- Common local setup and native build failures: `docs/troubleshooting.md`
-- Release and package validation: `docs/releasing.md`
+## Documentation updates
+
+Every public API, native dependency, build, or release change should update the relevant files under `docs/` in the same pull request:
+
+- `api.md`: signatures, mappings, support, runtime notes
+- `architecture.md`: module boundaries and ownership
+- `development.md`: local and CI validation workflow
+- `releasing.md`: npm/GitHub release behavior
+- `troubleshooting.md`: known failures and diagnostics

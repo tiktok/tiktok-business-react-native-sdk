@@ -1,86 +1,98 @@
 # Architecture
 
-`@tiktok-business/react-native-sdk` is a React Native TurboModule wrapper around the TikTok Business iOS and Android SDKs.
+`@tiktok-for-business/react-native-sdk` is a React Native New Architecture TurboModule wrapper around the TikTok Business iOS and Android SDKs.
 
-## Boundary diagram
+## Runtime boundary
 
 ```text
-React Native app
+Host React Native app
   ↓
-Public TypeScript API (`src/index.ts`, `src/sdk.ts`, `src/ios.ts`, `src/android.ts`)
+Public TypeScript API
+  ├─ src/index.ts
+  ├─ src/sdk.ts
+  ├─ src/ios.ts
+  └─ src/android.ts
   ↓
-TurboModule contract (`src/NativeTiktokBusinessReactNativeSdk.ts`)
+Codegen TurboModule contracts
+  ├─ NativeTiktokBusinessReactNativeSdk
+  └─ NativeTiktokBusinessReactNativeStoreKitIOS
   ↓
 Android Kotlin bridge / iOS Objective-C++ bridge
   ↓
 TikTok Business Android SDK / TikTok Business iOS SDK
 ```
 
-The JavaScript layer owns public TypeScript names, light payload shaping, and wrong-platform checks for public platform-specific methods. The native layer owns native SDK object construction and native error details.
+The JavaScript layer owns typed public names, light normalization, and wrong-platform checks. Native code owns SDK configuration, native event objects, callbacks, and native error details.
 
-## Public API layout
+## Public API organization
 
-Cross-platform APIs live on the default root SDK object:
+The default SDK object and named exports expose:
 
-- `initialize`
-- `trackEvent`
-- `trackContentEvent`
-- `trackCustomEvent`
-- `trackAdRevenueEvent`
-- `flush`
-- `identify`
-- `logout`
+- Shared: `initialize`, `trackEvent`, `trackContentEvent`, `trackCustomEvent`, `trackAdRevenueEvent`, `flush`, `identify`, `logout`, `fetchDeferredDeeplink`
+- iOS-only: `requestTrackingAuthorization`, `trackStoreKit2PurchaseFailed`
+- Android-only: `trackGooglePlayPurchase`
 
-Platform-specific APIs stay on the root SDK object with unprefixed public names:
+Platform-specific wrappers reject before invoking native code when called on the wrong OS.
 
-- `requestTrackingAuthorization`
-- `trackGooglePlayPurchase`
+## TurboModule contracts
 
-These methods check `Platform.OS` in JavaScript before invoking native calls so shared code receives a clear unsupported-platform rejection on the wrong OS.
+`src/NativeTiktokBusinessReactNativeSdk.ts` defines the main cross-platform Codegen contract. StoreKit 2 purchase-failure reporting uses a separate iOS-only contract in `src/NativeTiktokBusinessReactNativeStoreKitIOS.ts`, retrieved lazily so Android does not resolve an unavailable native module.
 
-## TurboModule contract
+Keep these layers synchronized:
 
-`src/NativeTiktokBusinessReactNativeSdk.ts` is the Codegen-facing source of truth for bridge method signatures. Keep it aligned with:
+- Public exports and types
+- JavaScript wrappers
+- Codegen specs
+- Android generated-spec implementation
+- iOS generated-spec implementation
+- Unit tests and Example App actions
 
-- `src/sdk.ts` for cross-platform wrappers
-- `src/ios.ts` for iOS-specific wrapper implementation
-- `src/android.ts` for Android-specific wrapper implementation
-- `android/src/main/java/com/tiktokbusinessreactnativesdk/TiktokBusinessReactNativeSdkModule.kt`
-- `ios/TiktokBusinessReactNativeSdk.mm`
+## Payload and capability policy
 
-## Native mapping policy
+Public APIs must map to confirmed native SDK capabilities; the package does not simulate native behavior in JavaScript.
 
-Public APIs must map to confirmed native SDK capabilities. Consent-related RN APIs must map directly to stable native SDK APIs; this package must not create JavaScript-only consent state that the native SDK cannot enforce.
+- `tiktokAppId: string[]` is normalized to the native SDK's single string representation.
+- Startup tracking, debug, EDP, limited-data-use, performance, and iOS settings are applied before native initialization.
+- Standard/custom/content/ad-revenue APIs construct corresponding native event objects.
+- Advanced Matching values pass through to native code; the React Native layer does not hash or persist email/phone data.
+- Deferred deeplink calls resolve to a small cross-platform result object.
+- iOS ATT, iOS StoreKit 2 failure reporting, and Android Google Play purchase reporting remain explicit platform APIs.
 
-- Initialization maps JS `appId`, `accessToken`, and `tiktokAppId` to native config objects; `tiktokAppId` arrays are joined before native calls because both native SDKs expect a single TikTok App ID string value.
-- Top-level initialization tracking controls are applied before native initialization.
-- Standard and custom events map to native base event types.
-- Content events map to native content event subclasses/builders.
-- Ad revenue events map to native ad revenue event types.
-- Advanced Matching passes identity fields to native SDK APIs.
-- Android Google Play Purchase uses `trackGooglePlayPurchase` and checks Android before native invocation.
-- ATT uses `requestTrackingAuthorization`, checks iOS before native invocation, and requires host app privacy setup.
+If native parity is absent, document the capability as unsupported instead of adding JavaScript-only state or a misleading fallback.
 
-If a native SDK version lacks a method, document unsupported behavior rather than inventing a JavaScript fallback.
+## Host-app ownership
 
-## Capability ownership boundaries
+The host app—not this bridge—owns:
 
-The React Native bridge supports advertiser-facing iOS and Android App Events SDK capabilities that have stable native APIs and a clear JavaScript use case. The bridge does not own app-store permissions, consent UX, SKAN ownership decisions, Android repository setup, release shrinker policy, or native dependency conflict resolution.
+- Consent UI, privacy disclosures, and data eligibility
+- `NSUserTrackingUsageDescription` and ATT timing
+- SKAdNetwork ownership decisions
+- Android permissions, repositories, dependency conflict resolution, and R8/Proguard policy
+- Deep-link routing and URI/app/universal-link setup
+- Valid Billing/StoreKit transaction collection
+- Production credential storage
 
-Unity and the combined TikTok App Events + Pangle SDK are intentionally out of scope. They are documented in the local source docs so developers can understand the native SDK landscape, but this package only bridges the standalone TikTok Business iOS and Android SDKs.
+## Example App role
 
-For privacy-sensitive values, the RN layer only passes runtime values to native methods. It must not hash, persist, normalize, or rewrite email, phone, or other customer identifiers in JavaScript.
+The Example App is a manual bridge-validation surface. It stores credentials only in runtime state, exposes supported SDK actions, and uses sample payloads. The committed dependency is `workspace:*`, so normal development validates the current checkout. Published npm artifacts can be tested by temporarily pinning an exact package version.
 
-## Privacy and consent boundary
+## Build architecture
 
-The React Native SDK does not provide a consent UI and does not decide whether tracking is allowed. The host app owns consent prompts, privacy policy compliance, ATT timing, and business-specific data eligibility.
+The repository is a pnpm workspace orchestrated by Turborepo:
 
-Email and phone values in `identify(payload)` are pass-through values. The JavaScript layer does not hash, persist, or rewrite them.
+- Bob builds ESM and TypeScript declarations into `lib/`.
+- Jest, TypeScript, ESLint, and Prettier validate the shared codebase.
+- Android CI builds the Example App with Gradle.
+- iOS CI installs CocoaPods dependencies and builds the Example App for an iOS Simulator with Turborepo task caching.
 
-## Error model
+Turborepo task caching can skip an unchanged native build.
 
-The JavaScript layer does not create a unified `SdkError`. Rejections surface native bridge payloads so platform-specific codes and details remain available to host apps.
+## Release architecture
 
-## Example app role
+`.github/workflows/release.yml` is manually dispatched:
 
-The example app is a manual validation surface for initialization, automatic event configuration, event reporting, Advanced Matching, debug/log options, and platform-specific APIs. It must use sample payloads only and must not include real credentials or sensitive user data.
+- `main` invokes `release-it`, producing a semantic-version release commit/tag, npm publication, git push, and GitHub release.
+- Other refs publish `<base>-dev.<short-sha>` with npm dist-tag `dev` and do not create release commits/tags.
+- npm authentication uses GitHub OIDC Trusted Publishing (`id-token: write`) rather than a long-lived repository token.
+
+See `docs/releasing.md` for operational setup and checks.

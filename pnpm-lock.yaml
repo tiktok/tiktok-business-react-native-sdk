@@ -80,7 +80,7 @@ importers:
 
   example:
     dependencies:
-      '@tiktok-business/react-native-sdk':
+      '@tiktok-for-business/react-native-sdk':
         specifier: workspace:*
         version: link:..
       react:

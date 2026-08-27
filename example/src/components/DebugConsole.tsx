@@ -14,7 +14,7 @@ import type {
   AdvancedMatchingPayload,
   AndroidGooglePlayPurchasePayload,
   TrackAdRevenueEventOptions,
-} from '@tiktok-business/react-native-sdk';
+} from '@tiktok-for-business/react-native-sdk';
 import {
   contentEventNames,
   defaultAndroidGooglePlayPurchasePayload,

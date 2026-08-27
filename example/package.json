@@ -12,7 +12,7 @@
     "verify": "pnpm --workspace-root build:android && pnpm --workspace-root build:ios"
   },
   "dependencies": {
-    "@tiktok-business/react-native-sdk": "workspace:*",
+    "@tiktok-for-business/react-native-sdk": "workspace:*",
     "react": "19.2.0",
     "react-native": "0.83.0"
   },
