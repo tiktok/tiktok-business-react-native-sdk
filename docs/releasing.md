@@ -55,7 +55,7 @@ The workflow:
 3. Upgrades npm so OIDC trusted publishing is supported.
 4. Runs `pnpm check`.
 5. Configures the GitHub Actions bot identity.
-6. Runs `pnpm release --ci <version>`.
+6. Runs `pnpm release --ci <version>`; the script invokes `release-it` without interactive-only flags, so CI mode automatically accepts the configured publish, commit, tag, push, and GitHub release operations.
 7. `release-it` updates the version, creates the release commit and `v<version>` tag, publishes npm through Trusted Publishing, pushes git changes, and creates the GitHub release. npm's `prepare` lifecycle runs `pnpm build:root` before publication. The release-it npm authentication preflight is disabled because OIDC credentials are minted only during the actual `npm publish` process.
 
 ### Non-`main`: development release
