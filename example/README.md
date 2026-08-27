@@ -1,6 +1,6 @@
 # TikTok Business React Native SDK Example
 
-This example app validates the local `@tiktok-business/react-native-sdk` package against React Native iOS and Android projects.
+This example app validates the current workspace build of `@tiktok-for-business/react-native-sdk` against React Native iOS and Android projects. For a published-package smoke test, replace the workspace dependency temporarily with an exact npm version, reinstall with a frozen lockfile update, validate both platforms, and restore the workspace dependency before committing.
 
 ## Prerequisites
 
@@ -82,9 +82,10 @@ Shared root methods:
 ### Network debugging notes
 
 - The example UI runs public SDK actions, but it does not provide an in-app network timeline.
-- Use Charles, Proxyman, or another system proxy to inspect native network traffic.
+- Use Bifrost, Charles, Proxyman, or another system proxy to inspect native network traffic.
 - On iOS, configure the simulator or device proxy and trust the proxy certificate.
-- On Android, the example app includes a Debug-only network security config for local proxy certificates.
+- On Android Studio Emulator, route traffic to the host proxy through `10.0.2.2:<proxy-port>`; the example app includes a Debug-only network security config for local user CA certificates.
+- TikTok batch requests may use `Content-Encoding: gzip`; decode the body before inspecting JSON.
 
 ## Validation commands
 

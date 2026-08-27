@@ -1,13 +1,23 @@
-# @tiktok-business/react-native-sdk
+# @tiktok-for-business/react-native-sdk
+
+[![npm](https://img.shields.io/npm/v/%40tiktok-for-business%2Freact-native-sdk?label=npm)](https://www.npmjs.com/package/@tiktok-for-business/react-native-sdk)
+[![build](https://img.shields.io/github/actions/workflow/status/tiktok/tiktok-business-react-native-sdk/ci.yml?label=build)](https://github.com/tiktok/tiktok-business-react-native-sdk/actions/workflows/ci.yml)
+[![downloads](https://img.shields.io/npm/dw/%40tiktok-for-business%2Freact-native-sdk?label=downloads)](https://www.npmjs.com/package/@tiktok-for-business/react-native-sdk)
+[![license](https://img.shields.io/npm/l/%40tiktok-for-business%2Freact-native-sdk?label=license)](https://www.npmjs.com/package/@tiktok-for-business/react-native-sdk)
 
 React Native SDK for advertiser apps integrating TikTok Business event measurement on iOS and Android.
 
 This package exposes a typed React Native API over the TikTok Business native iOS and Android SDKs. It keeps JavaScript behavior close to native SDK behavior: initialization, tracking controls, event reporting, Advanced Matching, debug/log configuration, and platform-specific APIs are bridged without a JavaScript-owned error wrapper.
 
+## Native SDKs
+
+- iOS: [tiktok-business-ios-sdk 1.7.1](https://github.com/tiktok/tiktok-business-ios-sdk)
+- Android: [tiktok-business-android-sdk 1.7.0](https://github.com/tiktok/tiktok-business-android-sdk)
+
 ## Install
 
 ```sh
-pnpm add @tiktok-business/react-native-sdk
+pnpm add @tiktok-for-business/react-native-sdk
 ```
 
 ### iOS
@@ -39,7 +49,7 @@ Also configure `INTERNET` and `AD_ID` permissions according to your target SDK a
 import TikTokBusinessSDK, {
   TikTokContentEventNames,
   TikTokEventNames,
-} from '@tiktok-business/react-native-sdk';
+} from '@tiktok-for-business/react-native-sdk';
 ```
 
 ## Initialize

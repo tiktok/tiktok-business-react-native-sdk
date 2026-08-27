@@ -1,118 +1,118 @@
 # Releasing Guide
 
-This guide covers release preparation and npm publishing for `@tiktok-business/react-native-sdk`.
+This guide describes the release workflow for `@tiktok-for-business/react-native-sdk` as implemented in `package.json` and `.github/workflows/release.yml`.
 
 ## Versioning
 
 Use semantic versioning:
 
-- Patch: bug fixes, documentation fixes, and internal changes that do not alter public API behavior.
-- Minor: new backwards-compatible APIs, new unprefixed platform-specific root capabilities, or native SDK compatibility updates that do not break consumers.
-- Major: breaking TypeScript API changes, changed native setup requirements, removed APIs, or changed runtime behavior that requires app code changes.
+- **Patch**: backwards-compatible fixes and documentation-only changes.
+- **Minor**: backwards-compatible public APIs or native SDK compatibility updates.
+- **Major**: breaking TypeScript APIs, runtime behavior, or host-app setup requirements.
 
-This initialize-contract replacement is a major change because it changes required credentials and initialization controls.
+## Pre-release validation
 
-## Release preparation
-
-Start from a clean working tree and install dependencies:
+Start from a clean working tree and use the pinned workspace tools:
 
 ```sh
-pnpm install
-```
-
-Run the release validation checks:
-
-```sh
-pnpm check
-pnpm build
+nvm use
+pnpm install --frozen-lockfile
+pnpm release:prepare
 pnpm package:validate
+pnpm build:android
+pnpm build:ios
 ```
 
-Validate examples when native code or dependencies changed:
+`pnpm release:prepare` runs lint, typecheck, tests, and the library build. `pnpm package:validate` runs a dry-run pack so the publish manifest can be reviewed without uploading anything.
 
-```sh
-pnpm example:android
-pnpm example:ios
-pnpm --filter tiktok-business-react-native-sdk-example build:android
-pnpm --filter tiktok-business-react-native-sdk-example build:ios
-```
-
-Use the Example App manual golden paths before release: initialize with required credentials and initialization controls, track standard/content/custom/ad revenue events, flush, identify, logout, validate iOS ATT/SKAN ownership, and validate Android purchase reporting only when native purchase prerequisites are configured. Confirm the Example App only shows controls supported by the running OS and uses checkbox/switch-style controls for boolean options.
+When native behavior changed, also launch the Example App and run the manual golden path: initialize, standard/content/custom/ad-revenue events, identify, flush, logout, deferred deeplink, iOS ATT/StoreKit where applicable, and Android Google Play purchase where real Billing payloads are available.
 
 ## Package contents
 
-The package is controlled by the `files` field in `package.json`. The publish tarball should include:
+The `files` field in the root `package.json` controls the tarball. Expected publish inputs are:
 
 - `src/`
 - `lib/`
 - `android/`
 - `ios/`
 - `TiktokBusinessReactNativeSdk.podspec`
-- `README.md`
-- `LICENSE`
-- `package.json`
+- npm-standard root files such as `README.md`, `LICENSE`, and `package.json`
 
-Run this before release:
+Build directories, caches, tests, Example App files, credentials, and local native artifacts must not be included.
 
-```sh
-pnpm package:validate
+## GitHub Actions release workflow
+
+Releases are manually dispatched from **Actions → Release → Run workflow**. The selected Git ref determines the behavior.
+
+### `main`: production release
+
+Input `version` accepts `major`, `minor`, `patch`, or a concrete semantic version such as `1.2.3`.
+
+The workflow:
+
+1. Checks out full git history.
+2. Installs pnpm/Node dependencies.
+3. Upgrades npm so OIDC trusted publishing is supported.
+4. Runs `pnpm check`.
+5. Configures the GitHub Actions bot identity.
+6. Runs `pnpm release --ci <version>`.
+7. `release-it` updates the version, creates the release commit and `v<version>` tag, publishes npm through Trusted Publishing, pushes git changes, and creates the GitHub release. npm's `prepare` lifecycle runs `pnpm build:root` before publication. The release-it npm authentication preflight is disabled because OIDC credentials are minted only during the actual `npm publish` process.
+
+### Non-`main`: development release
+
+The `version` input is ignored. The workflow creates:
+
+```text
+<package.json version>-dev.<short-sha>
 ```
 
-Confirm build directories, caches, tests, example app files, and local native artifacts are not included.
-
-## Native SDK compatibility
-
-Before release, verify the native SDK versions declared by this package:
-
-- iOS: `TiktokBusinessReactNativeSdk.podspec` dependency on `TikTokBusinessSDK`
-- Android: `android/build.gradle` dependency on `com.github.tiktok:tiktok-business-android-sdk`
-
-If a native SDK version changes, update:
-
-1. `docs/api.md` if mappings or supported APIs changed.
-2. `docs/troubleshooting.md` if setup or dependency resolution changed.
-3. `README.md` compatibility notes if host-app requirements changed.
-4. Unit tests and native bridge code if signatures changed.
-
-- When updating native SDK versions, re-check deferred deeplink, consent/data-sharing, advertiser ID, pre-consent tracking delay, enhance data postback, automatic IAP, and ad revenue APIs against `docs/api.md` and `docs/tiktok-app-events-sdk/`.
-
-## release-it flow
-
-The package uses `release-it` for versioning and publishing.
-
-Dry-run the release flow first:
+It then sets that immutable version, builds, and publishes it with npm dist-tag `dev`:
 
 ```sh
-pnpm release --dry-run
+npm version "$DEV_VERSION" --no-git-tag-version
+pnpm build
+npm publish --tag dev
 ```
 
-Create the release when validation is complete:
+A development release does not create or push a version commit, git tag, or GitHub release.
 
-```sh
-pnpm release
-```
+## npm Trusted Publishing setup
 
-The release configuration updates the version, creates a git tag, publishes to npm, and creates a GitHub release.
+The workflow uses npm Trusted Publishing rather than a long-lived `NPM_TOKEN`. The workflow grants `id-token: write`; npm exchanges the GitHub OIDC identity for short-lived publish credentials.
 
-## npm publish requirements
+On npmjs.com, open the package settings for `@tiktok-for-business/react-native-sdk` and add a trusted publisher with:
 
-- Confirm npm authentication with publish rights for `@tiktok-business`.
-- Confirm `publishConfig.access` is `public`.
-- Confirm the package name is `@tiktok-business/react-native-sdk`.
-- Confirm the package tarball contents with `pnpm package:validate`.
+- Provider: GitHub Actions
+- Organization/user: `tiktok`
+- Repository: `tiktok-business-react-native-sdk`
+- Workflow filename: `release.yml`
+- Environment: leave empty unless the workflow job is later assigned a matching GitHub Environment
+
+The repository/ref restriction is enforced by the workflow itself: `main` publishes production versions, while other manually selected branches publish `dev` versions.
+
+Do not restore `NPM_TOKEN` unless Trusted Publishing is unavailable and the fallback is explicitly approved. A normal user/granular token can trigger npm `EOTP` when the account or package requires publish-time 2FA; passing an interactive OTP is not suitable for unattended CI.
+
+## Native SDK compatibility check
+
+Before publishing, verify:
+
+- iOS `TikTokBusinessSDK` version in `TiktokBusinessReactNativeSdk.podspec`.
+- Android `com.github.tiktok:tiktok-business-android-sdk` version in `android/build.gradle`.
+- `docs/api.md` support matrix and examples.
+- `docs/troubleshooting.md` host-app and dependency requirements.
+- Example App builds on both platforms.
 
 ## Release checklist
 
-- [ ] Version bump follows semantic versioning.
-- [ ] `pnpm check` passes.
-- [ ] `pnpm build` passes and produces `lib/`.
-- [ ] `pnpm package:validate` contains only intended publish artifacts.
-- [ ] Android example run or build passes when Android bridge or dependencies changed.
-- [ ] iOS example run or build passes when iOS bridge or dependencies changed.
-- [ ] README and API docs match the release API surface and support matrix.
-- [ ] Native SDK compatibility notes are current.
-- [ ] No real App IDs, access tokens, phone numbers, email addresses, internal links, or internal business assumptions are present.
-- [ ] Do not commit real App IDs, access tokens, internal links, internal business assumptions, phone, or email values.
-- [ ] Docs and comments may help external developers integrate and troubleshoot, but must not expose App IDs, access tokens, internal links, internal business assumptions, or other sensitive information.
-- [ ] Debug mode and verbose logging are disabled for production guidance.
-- [ ] Duplicate Purchase reporting risks are documented when automatic IAP tracking and manual purchase APIs can overlap.
+- [ ] Semantic version is correct.
+- [ ] Working tree contains only intended changes.
+- [ ] `pnpm release:prepare` passes.
+- [ ] `pnpm package:validate` contains only intended files.
+- [ ] Android and iOS example builds pass for native/dependency changes.
+- [ ] Manual SDK golden path passes where runtime credentials are available.
+- [ ] README and all files under `docs/` match the public TypeScript API.
+- [ ] Native SDK versions and host-app requirements are current.
+- [ ] npm Trusted Publisher exactly matches repository and `release.yml`.
+- [ ] No real App IDs, access tokens, personal data, private URLs, or debug secrets are committed.
+- [ ] Production guidance keeps debug mode and verbose logging disabled.
+- [ ] Automatic and manual purchase reporting cannot double-count the same transaction.

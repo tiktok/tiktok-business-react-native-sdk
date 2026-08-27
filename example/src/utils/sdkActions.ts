@@ -4,7 +4,7 @@ import TikTokBusinessSDK, {
   type AndroidGooglePlayPurchasePayload,
   type EventProperties,
   type TrackAdRevenueEventOptions,
-} from '@tiktok-business/react-native-sdk';
+} from '@tiktok-for-business/react-native-sdk';
 
 import type {
   EditablePayloads,

@@ -17,7 +17,7 @@ jest.mock('react-native', () => ({
   },
 }));
 
-jest.mock('@tiktok-business/react-native-sdk', () => ({
+jest.mock('@tiktok-for-business/react-native-sdk', () => ({
   __esModule: true,
   TikTokEventNames: {
     LaunchApp: 'LaunchApp',
@@ -39,7 +39,7 @@ jest.mock('@tiktok-business/react-native-sdk', () => ({
     fetchDeferredDeeplink: jest.fn(),
   },
 }));
-import TikTokBusinessSDK from '@tiktok-business/react-native-sdk';
+import TikTokBusinessSDK from '@tiktok-for-business/react-native-sdk';
 import type {
   EditablePayloads,
   RuntimeSdkConfig,

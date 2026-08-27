@@ -7,7 +7,7 @@ import type {
   TikTokContentEventName,
   TikTokEventName,
   TrackAdRevenueEventOptions,
-} from '@tiktok-business/react-native-sdk';
+} from '@tiktok-for-business/react-native-sdk';
 
 export type SupportedPlatform = 'ios' | 'android' | 'both';
 export type ActionStatus = 'idle' | 'running' | 'success' | 'error';

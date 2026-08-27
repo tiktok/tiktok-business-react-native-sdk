@@ -1,10 +1,10 @@
 # Troubleshooting
 
-This guide lists common setup and runtime issues for `@tiktok-business/react-native-sdk`.
+This guide covers common setup, runtime, CI, and publishing failures for `@tiktok-for-business/react-native-sdk`.
 
 ## SDK not initialized
 
-Call `initialize` before tracking events:
+Call `initialize` before event, identity, flush, or deferred-deeplink operations:
 
 ```ts
 await TikTokBusinessSDK.initialize({
@@ -14,151 +14,116 @@ await TikTokBusinessSDK.initialize({
 });
 ```
 
-## Test Events with multiple TikTok App IDs
+Initialization controls are startup settings. Changing them after initialization does not retroactively alter the native SDK instance.
 
-When `tiktokAppId` contains multiple IDs, pass an array such as `['sample-tiktok-app-id', 'sample-tiktok-app-id-2']`. Keep each entry as one ID with no commas or spaces. During Test Events validation, start with the first ID in the array as the Events Manager app where you expect debug traffic to appear, then verify any additional app IDs according to your measurement setup.
+## Native errors and platform APIs
 
-## Native error payloads
+The JavaScript layer preserves native rejection details rather than wrapping them in an SDK-specific error class. Log the runtime rejection payload while debugging.
 
-The JavaScript layer preserves native bridge rejection details. Log the received rejection payload directly while debugging instead of expecting a JavaScript-owned `SdkError` shape.
-
-## Initialization controls did not change
-
-Initialization controls must be passed before native initialization. Changing these fields after initialization does not retroactively alter SDK startup behavior.
-
-```ts
-await TikTokBusinessSDK.initialize({
-  appId: 'sample-app-id',
-  accessToken: 'sample-access-token',
-  tiktokAppId: ['sample-tiktok-app-id'],
-  disableAutoTrack: true,
-  disableRetentionTrack: true,
-  disablePayTrack: true,
-  disableInstallTrack: true,
-  disableLaunchTrack: true,
-});
-```
-
-## Platform-specific API errors
-
-`requestTrackingAuthorization()` is iOS-only and `trackGooglePlayPurchase(payload)` is Android-only. Wrong-platform calls reject from JavaScript with an unsupported-platform payload before invoking native platform APIs. Guard shared JavaScript with `Platform.OS` when needed.
+- `requestTrackingAuthorization()` and `trackStoreKit2PurchaseFailed()` are iOS-only.
+- `trackStoreKit2PurchaseFailed()` additionally requires iOS 15+ and a non-empty product ID.
+- `trackGooglePlayPurchase()` is Android-only.
+- Wrong-platform calls reject before invoking a native platform API.
 
 ## Deferred deeplink returned no URL
 
-Check these items when `fetchDeferredDeeplink()` resolves without `url`:
+Check that initialization completed, the campaign and install are eligible, and the host app can route the returned URI. An empty result means no URL was available for the current install/session; it is not necessarily a bridge failure.
 
-- SDK initialization completed before calling the method.
-- The campaign is configured with a supported URI scheme deferred deeplink.
-- The app has installed/launched in a flow eligible for deferred deeplink attribution.
-- The host app has implemented normal deeplink routing for the returned URI.
+## iOS pods or lockfile changed in deployment mode
 
-## iOS ATT setup
+CocoaPods may recalculate the Hermes podspec checksum across environments. CI preserves the committed Hermes checksum before comparing the generated lockfile, so any other dependency or checksum change causes:
 
-Run `cd ios && bundle exec pod install` after adding the package so CocoaPods installs the native TikTok Business iOS SDK from this package's podspec.
-
-Use `requestTrackingAuthorization()` only after the host app includes `NSUserTrackingUsageDescription` in `Info.plist`. The host app owns ATT timing, consent UX, and business rules for which events are allowed before or after consent.
-
-## iOS ATT and SKAN validation
-
-If ATT or SKAN behavior does not match expectations:
-
-- Confirm `NSUserTrackingUsageDescription` exists in the host app `Info.plist` before calling `requestTrackingAuthorization()`.
-- Confirm the host app calls `requestTrackingAuthorization()` only at the intended consent moment.
-- Confirm whether the host app, MMP, or TikTok SDK owns SKAN conversion updates.
-- If an MMP or host app owns SKAN, initialize with `ios.disableSKAdNetworkSupport: true` before SDK startup.
-- Reinstall pods after native SDK version changes.
-
-## iOS build issues
-
-If CocoaPods cannot resolve `TikTokBusinessSDK`:
-
-```sh
-cd example
-bundle install
-bundle exec pod repo update
-bundle exec pod install --project-directory=ios
+```text
+There were changes to the lockfile in deployment mode
 ```
 
-If generated TurboModule headers are missing, reinstall pods after changing `src/NativeTiktokBusinessReactNativeSdk.ts`.
+Regenerate `example/ios/Podfile.lock` with the same Ruby/Bundler, CocoaPods, and React Native versions used by CI, then review and commit the legitimate lockfile update. Do not disable deployment verification merely to hide an unexplained diff.
 
-If Xcode reports that an iOS simulator runtime is not installed, install the matching runtime from Xcode Settings > Components.
+The current CI normalizes the known machine-specific Hermes checksum before comparing the lockfile; changes to other entries still fail intentionally.
 
-## Android dependency/version conflicts
+## iOS build takes a long time
 
-This package declares TikTok Business SDK, AndroidX Lifecycle, Google Play Billing, and Install Referrer dependencies from its Gradle configuration. If a host app pins different versions, inspect Gradle dependency resolution:
+A cold React Native New Architecture build can spend many minutes installing pods and compiling React Native and its native dependencies from source. Turborepo can skip the native build when all tracked inputs are unchanged, but a cache miss performs the full build.
+
+If logs appear idle, run the underlying build with `--verbose` or inspect the active `xcodebuild` process before cancelling. Long compile periods are expected on a fresh GitHub-hosted macOS runner.
+
+## iOS ATT and SKAN
+
+- Add `NSUserTrackingUsageDescription` before requesting ATT.
+- Call ATT only at the host app's intended consent moment.
+- Decide whether the host app, MMP, or TikTok SDK owns SKAN conversion updates.
+- Use `ios.disableSKAdNetworkSupport: true` before initialization when SDK SKAN support must be disabled.
+- Reinstall pods after native SDK or Codegen changes.
+
+## Android dependency conflicts
+
+Inspect the resolved runtime graph:
 
 ```sh
 cd example/android
 ./gradlew :app:dependencies --configuration debugRuntimeClasspath
 ```
 
-Check for:
+Check JitPack access, compile/target SDK compatibility, Java 8 support, Lifecycle, Google Play Billing, Install Referrer, and R8/Proguard rules. The package currently declares Android TikTok Business SDK `1.7.0`, Lifecycle `2.8.7`, Billing `7.1.1`, and Install Referrer `2.2`.
 
-- Missing JitPack repository configuration.
-- Conflicting Google Play Billing versions.
-- Conflicting AndroidX Lifecycle versions.
-- Release shrinker rules removing native SDK classes.
-- Host app compile options that do not support Java 8 APIs required by dependencies.
+## Android emulator HTTPS proxy
 
-## Android host app requirements
+For a proxy running on the host Mac, configure Android Studio Emulator with the special host address:
 
-Check these host app items when Android events do not appear as expected:
-
-- AD_ID permission is configured when required by your target SDK and measurement plan.
-- Java 8 compile options are enabled in the app-level Gradle file.
-- TikTok Business SDK, Lifecycle, Google Play Billing, and Install Referrer dependencies are present.
-- Google Play Billing purchase payload collection is present before calling `trackGooglePlayPurchase`.
-- Install Referrer setup matches native SDK requirements.
-- Lifecycle integration is available so launch/retention style automatic events can be observed.
-- Initialization runs in the main app process and not only from a WebView-only process.
-- Release Proguard/R8 rules preserve required native SDK classes if the native SDK version requires them.
-
-## Purchase duplication
-
-If automatic purchase tracking is enabled, do not also report the same Google Play purchase manually through `trackGooglePlayPurchase(payload)` unless your measurement plan explicitly requires duplicate signals.
-
-Check these items when Purchase counts look too high:
-
-- Whether `disablePayTrack` is set before initialization.
-- Whether the Android app calls `trackGooglePlayPurchase(payload)` for purchases already observed by automatic IAP tracking.
-- Whether retry logic in the host app can send the same purchase payload more than once.
-- Whether ad monetization revenue was accidentally sent as a Purchase event instead of `trackAdRevenueEvent(options)`.
-
-## Debug and Test Events
-
-Enable debug mode and verbose logging only for development or QA validation:
-
-```ts
-await TikTokBusinessSDK.initialize({
-  appId: 'sample-app-id',
-  accessToken: 'sample-access-token',
-  tiktokAppId: ['sample-tiktok-app-id'],
-  debug: {
-    enabled: true,
-    logLevel: 'debug',
-  },
-});
+```sh
+adb shell settings put global http_proxy 10.0.2.2:9900
+adb shell settings get global http_proxy
 ```
 
-Disable debug mode and verbose logging before production release. Use TikTok Test Events or your native SDK validation workflow to confirm events are received.
+Replace `9900` with the actual proxy port. `127.0.0.1` points to the emulator itself. Install/trust the proxy CA in the emulator; the Example App's Debug network security configuration permits user CAs. Remove the proxy afterward:
 
-## Sensitive values in debugging
+```sh
+adb shell settings put global http_proxy :0
+```
 
-Do not paste real App IDs, access tokens, phone numbers, email addresses, screenshots containing secrets, internal links, or internal business assumptions into debug logs, issue reports, or documentation. Use sample values when validating bridge behavior.
+If CONNECT requests appear but HTTPS bodies do not, verify CA trust and TLS interception. Certificate pinning cannot be decoded by a normal MITM proxy.
+
+## Gzip request bodies in Bifrost
+
+TikTok batch requests may send `Content-Encoding: gzip` with `Content-Type: application/json`. A binary-looking Body is compressed, not necessarily encrypted. Use a Bifrost Decode rule that reads the automatically decompressed request body and formats JSON; apply the rule to the target endpoint and trigger a new request because existing history is not reprocessed.
 
 ## Metro and pnpm resolution
 
-This workspace uses pnpm with hoisted node modules for React Native compatibility.
-
 ```sh
-pnpm install
+pnpm install --frozen-lockfile
 pnpm example:start -- --reset-cache
 ```
 
-## Package validation failures
+The committed Example App resolves the workspace package through `workspace:*`. If validating a published npm artifact, temporarily pin an exact version, reinstall, verify the resolved package, and restore the workspace dependency before committing.
 
-If `pnpm package:validate` includes unexpected files:
+## Purchase duplication
 
-1. Review the `files` field in `package.json`.
-2. Run `pnpm clean` and `pnpm prepare`.
-3. Rerun `pnpm package:validate`.
+Do not manually submit the same purchase already reported by automatic IAP tracking. If the host app owns manual purchase reporting, set `disablePayTrack: true` before initialization according to the measurement plan. `trackAdRevenueEvent` is for ad monetization, not store purchases.
+
+## npm publish fails with `EOTP`
+
+`EOTP` means npm requires an authenticator one-time password for that credential/publish operation. An interactive OTP is unsuitable for unattended GitHub Actions. Configure npm Trusted Publishing for the exact GitHub repository and `.github/workflows/release.yml`, ensure the workflow grants `id-token: write`, and publish without `NPM_TOKEN`.
+
+## npm publish returns 403
+
+Verify:
+
+- The package/scope is exactly `@tiktok-for-business/react-native-sdk`.
+- The npm account or trusted publisher has publish access to `@tiktok-for-business`.
+- The trusted publisher repository owner, repository name, and workflow filename match exactly.
+- The version does not already exist; npm versions are immutable.
+- `publishConfig.registry` is `https://registry.npmjs.org/` and access is public.
+
+## Package validation includes unexpected files
+
+```sh
+pnpm clean
+pnpm build
+pnpm package:validate
+```
+
+Review the root `package.json` `files` field and do not publish Example App artifacts, caches, credentials, logs, or platform build directories.
+
+## Sensitive debugging values
+
+Never commit or paste real App IDs, access tokens, personal identifiers, private links, or business-sensitive values into source, docs, CI logs, screenshots, or issue reports. Use runtime-only sample values and disable verbose logging for production.

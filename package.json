@@ -1,5 +1,5 @@
 {
-  "name": "@tiktok-business/react-native-sdk",
+  "name": "@tiktok-for-business/react-native-sdk",
   "version": "0.1.0",
   "description": "TikTok Business React Native SDK",
   "main": "./lib/module/index.js",
@@ -142,7 +142,7 @@
   "jest": {
     "preset": "react-native",
     "moduleNameMapper": {
-      "^@tiktok-business/react-native-sdk$": "<rootDir>/src/index"
+      "^@tiktok-for-business/react-native-sdk$": "<rootDir>/src/index"
     },
     "modulePathIgnorePatterns": [
       "<rootDir>/example/node_modules",
@@ -164,7 +164,8 @@
       "tagName": "v${version}"
     },
     "npm": {
-      "publish": true
+      "publish": true,
+      "skipChecks": true
     },
     "github": {
       "release": true
