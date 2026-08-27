@@ -52,7 +52,7 @@
     "test:root": "jest --runInBand",
     "build:root": "pnpm sync:version && bob build",
     "package:validate": "pnpm pack --dry-run",
-    "release": "release-it --only-version"
+    "release": "release-it"
   },
   "keywords": [
     "react-native",
