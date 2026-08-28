@@ -46,13 +46,20 @@ import {
 import { buildSdkActions } from '../utils/sdkActions';
 
 const currentPlatform = Platform.OS === 'android' ? 'android' : 'ios';
-type DebugTab = 'config' | 'actions' | 'identity' | 'platform';
+type DebugTab =
+  | 'config'
+  | 'actions'
+  | 'identity'
+  | 'iosPlatform'
+  | 'androidPlatform';
 
 const tabs: Array<{ key: DebugTab; label: string }> = [
   { key: 'config', label: 'Config' },
   { key: 'actions', label: 'Actions' },
   { key: 'identity', label: 'Identity' },
-  { key: 'platform', label: 'Platform' },
+  currentPlatform === 'ios'
+    ? { key: 'iosPlatform', label: 'iOS Platform' }
+    : { key: 'androidPlatform', label: 'Android Platform' },
 ];
 
 function createInitialRuntimeConfig(): RuntimeSdkConfig {
@@ -89,6 +96,7 @@ function getStatusLabel(status: ActionStatus) {
 interface ActionButtonProps {
   action: SdkAction;
   status: ActionStatus;
+  result?: unknown;
   onRun: () => void;
 }
 
@@ -112,7 +120,7 @@ function isTrackAdRevenueOptions(
   );
 }
 
-function ActionButton({ action, status, onRun }: ActionButtonProps) {
+function ActionButton({ action, status, result, onRun }: ActionButtonProps) {
   return (
     <View style={debugConsoleStyles.actionBlock}>
       <View style={debugConsoleStyles.stack4}>
@@ -139,6 +147,14 @@ function ActionButton({ action, status, onRun }: ActionButtonProps) {
           {status === 'running' ? 'Running…' : action.label}
         </Text>
       </Pressable>
+
+      {result !== undefined ? (
+        <View style={debugConsoleStyles.previewBox}>
+          <Text style={debugConsoleStyles.previewText}>
+            {JSON.stringify(result, null, 2)}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -239,8 +255,11 @@ export function DebugConsole() {
   const [actionStatuses, setActionStatuses] = useState<
     Record<string, ActionStatus>
   >({});
+  const [actionResults, setActionResults] = useState<Record<string, unknown>>(
+    {}
+  );
   const [configErrors, setConfigErrors] = useState<string[]>([]);
-  const [_generalError, setGeneralError] = useState<string | null>(null);
+  const [generalError, setGeneralError] = useState<string | null>(null);
   const [trackEventPropertiesText, setTrackEventPropertiesText] = useState(
     JSON.stringify(defaultTrackEventProperties, null, 2)
   );
@@ -396,10 +415,16 @@ export function DebugConsole() {
     }
 
     setGeneralError(null);
+    setActionResults((current) => {
+      const next = { ...current };
+      delete next[actionId];
+      return next;
+    });
     setActionStatuses((current) => ({ ...current, [actionId]: 'running' }));
 
     try {
-      await action.run();
+      const result = await action.run();
+      setActionResults((current) => ({ ...current, [actionId]: result }));
       setActionStatuses((current) => ({ ...current, [actionId]: 'success' }));
     } catch (error) {
       setActionStatuses((current) => ({ ...current, [actionId]: 'error' }));
@@ -421,6 +446,7 @@ export function DebugConsole() {
         key={action.id}
         action={action}
         status={actionStatuses[action.id] ?? 'idle'}
+        result={actionResults[action.id]}
         onRun={() => {
           runAction(action.id).catch(() => undefined);
         }}
@@ -442,6 +468,7 @@ export function DebugConsole() {
               style={debugConsoleStyles.tabButton}
             >
               <Text
+                numberOfLines={1}
                 style={[
                   debugConsoleStyles.tabText,
                   active ? debugConsoleStyles.tabTextActive : null,
@@ -459,6 +486,12 @@ export function DebugConsole() {
           );
         })}
       </View>
+
+      {generalError ? (
+        <Text accessibilityRole="alert" style={debugConsoleStyles.errorText}>
+          {generalError}
+        </Text>
+      ) : null}
 
       {activeTab === 'config' ? (
         <View style={debugConsoleStyles.stack16}>
@@ -677,62 +710,96 @@ export function DebugConsole() {
         </View>
       ) : null}
 
-      {activeTab === 'platform' ? (
+      {activeTab === 'iosPlatform' ? (
         <View style={debugConsoleStyles.stack16}>
           <View style={debugConsoleStyles.panel}>
             <View style={debugConsoleStyles.sectionHeader}>
               <Text style={debugConsoleStyles.sectionLabel}>
-                Platform tools
+                iOS platform tools
               </Text>
-              <Text style={debugConsoleStyles.sectionTitle}>
-                {currentPlatform === 'ios'
-                  ? 'iOS-only APIs'
-                  : 'Android-only APIs'}
-              </Text>
+              <Text style={debugConsoleStyles.sectionTitle}>iOS-only APIs</Text>
               <Text style={debugConsoleStyles.sectionHint}>
-                The example only shows current-platform controls. Public JS
-                methods still check Platform before invoking native calls, so
-                wrong-platform calls fail before reaching the native bridge.
+                These controls exercise APIs and host configuration that only
+                apply to the iOS example app.
               </Text>
             </View>
 
-            {currentPlatform === 'ios' ? (
-              <View style={debugConsoleStyles.stack12}>
-                <Text style={debugConsoleStyles.sectionHint}>
-                  ATT status is requested through the host app's native iOS
-                  setup. SKAN ownership is configured before initialize on the
-                  Config tab.
+            <View style={debugConsoleStyles.stack12}>
+              <Text style={debugConsoleStyles.sectionHint}>
+                ATT status is requested through the host app's native iOS setup.
+                SKAN ownership is configured before initialize on the Config
+                tab.
+              </Text>
+
+              <View style={debugConsoleStyles.actionGroup}>
+                {renderAction('requestTrackingAuthorization')}
+              </View>
+
+              <View style={debugConsoleStyles.sectionHeader}>
+                <Text style={debugConsoleStyles.sectionTitle}>
+                  Local StoreKit sandbox
                 </Text>
-
-                <View style={debugConsoleStyles.actionGroup}>
-                  {renderAction('requestTrackingAuthorization')}
-                </View>
+                <Text style={debugConsoleStyles.sectionHint}>
+                  Initialize with Disable payment tracking off, then load or
+                  purchase products from StoreKitConfig.storekit. Launch this
+                  screen with Xcode Run on a Simulator or Developer Mode device;
+                  CLI launches do not activate the local StoreKit configuration.
+                  Successful transactions are finished after the TikTok SDK can
+                  observe them; cancelled or failed StoreKit 2 purchases also
+                  call trackStoreKit2PurchaseFailed().
+                </Text>
               </View>
-            ) : null}
 
-            {currentPlatform === 'android' ? (
-              <View style={debugConsoleStyles.stack12}>
-                <PayloadEditor
-                  label="Android Google Play purchase payload"
-                  value={editablePayloads.androidPurchasePayload}
-                  helperText="JSON object passed to trackGooglePlayPurchase(). Parsing happens in the example UI only; payload acceptance is decided by native."
-                  onRawChange={setAndroidPurchasePayloadText}
-                  onParsedValueChange={(value) => {
-                    if (value) {
-                      setEditablePayloads((current) => ({
-                        ...current,
-                        androidPurchasePayload: value,
-                      }));
-                    }
-                  }}
-                  onValidationChange={setAndroidPurchasePayloadError}
-                />
-
-                <View style={debugConsoleStyles.actionGroup}>
-                  {renderAction('trackGooglePlayPurchase')}
-                </View>
+              <View style={debugConsoleStyles.actionGroup}>
+                {renderAction('storeKit.loadProducts')}
+                {renderAction('storeKit.purchaseConsumable')}
+                {renderAction('storeKit.purchaseNonConsumable')}
+                {renderAction('storeKit.purchaseAutoRenewableSubscription')}
+                {renderAction('storeKit.purchaseNonRenewingSubscription')}
+                {renderAction('storeKit.restorePurchases')}
               </View>
-            ) : null}
+            </View>
+          </View>
+        </View>
+      ) : null}
+
+      {activeTab === 'androidPlatform' ? (
+        <View style={debugConsoleStyles.stack16}>
+          <View style={debugConsoleStyles.panel}>
+            <View style={debugConsoleStyles.sectionHeader}>
+              <Text style={debugConsoleStyles.sectionLabel}>
+                Android platform tools
+              </Text>
+              <Text style={debugConsoleStyles.sectionTitle}>
+                Android-only APIs
+              </Text>
+              <Text style={debugConsoleStyles.sectionHint}>
+                These controls exercise APIs and payloads that only apply to the
+                Android example app.
+              </Text>
+            </View>
+
+            <View style={debugConsoleStyles.stack12}>
+              <PayloadEditor
+                label="Android Google Play purchase payload"
+                value={editablePayloads.androidPurchasePayload}
+                helperText="JSON object passed to trackGooglePlayPurchase(). Parsing happens in the example UI only; payload acceptance is decided by native."
+                onRawChange={setAndroidPurchasePayloadText}
+                onParsedValueChange={(value) => {
+                  if (value) {
+                    setEditablePayloads((current) => ({
+                      ...current,
+                      androidPurchasePayload: value,
+                    }));
+                  }
+                }}
+                onValidationChange={setAndroidPurchasePayloadError}
+              />
+
+              <View style={debugConsoleStyles.actionGroup}>
+                {renderAction('trackGooglePlayPurchase')}
+              </View>
+            </View>
           </View>
         </View>
       ) : null}

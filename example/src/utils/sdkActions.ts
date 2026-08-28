@@ -13,6 +13,12 @@ import type {
   SupportedPlatform,
 } from '../types/debugConsole';
 import { toInitializeConfig } from '../types/debugConsole';
+import {
+  loadStoreKitProducts,
+  purchaseStoreKitProduct,
+  restoreStoreKitPurchases,
+  storeKitProductIds,
+} from './storeKitSandbox';
 
 export const requiredActionIds = [
   'root.initialize',
@@ -25,6 +31,12 @@ export const requiredActionIds = [
   'root.logout',
   'fetchDeferredDeeplink',
   'requestTrackingAuthorization',
+  'storeKit.loadProducts',
+  'storeKit.purchaseConsumable',
+  'storeKit.purchaseNonConsumable',
+  'storeKit.purchaseAutoRenewableSubscription',
+  'storeKit.purchaseNonRenewingSubscription',
+  'storeKit.restorePurchases',
   'trackGooglePlayPurchase',
 ] as const;
 
@@ -42,6 +54,12 @@ export const actionPlatformMap: Record<
   'root.logout': 'both',
   'fetchDeferredDeeplink': 'both',
   'requestTrackingAuthorization': 'ios',
+  'storeKit.loadProducts': 'ios',
+  'storeKit.purchaseConsumable': 'ios',
+  'storeKit.purchaseNonConsumable': 'ios',
+  'storeKit.purchaseAutoRenewableSubscription': 'ios',
+  'storeKit.purchaseNonRenewingSubscription': 'ios',
+  'storeKit.restorePurchases': 'ios',
   'trackGooglePlayPurchase': 'android',
 };
 
@@ -183,6 +201,76 @@ export function buildSdkActions({
       description:
         'Request ATT authorization through the iOS-only API after host app setup.',
       run: () => TikTokBusinessSDK.requestTrackingAuthorization(),
+      getPayloadPreview: () => ({ platform }),
+    },
+    {
+      id: 'storeKit.loadProducts',
+      label: 'Load StoreKit products',
+      apiName: 'StoreKitSandbox.loadProducts',
+      supportedPlatform: 'ios',
+      description:
+        'Load the four local products from the StoreKit configuration activated by an Xcode Run session.',
+      run: loadStoreKitProducts,
+      getPayloadPreview: () => ({
+        productIds: Object.values(storeKitProductIds),
+      }),
+    },
+    {
+      id: 'storeKit.purchaseConsumable',
+      label: 'Buy demo coins',
+      apiName: 'StoreKitSandbox.purchase',
+      supportedPlatform: 'ios',
+      description:
+        'Create a StoreKit 2 consumable transaction that automatic IAP tracking can observe.',
+      run: () => purchaseStoreKitProduct(storeKitProductIds.consumable),
+      getPayloadPreview: () => ({ productId: storeKitProductIds.consumable }),
+    },
+    {
+      id: 'storeKit.purchaseNonConsumable',
+      label: 'Buy premium upgrade',
+      apiName: 'StoreKitSandbox.purchase',
+      supportedPlatform: 'ios',
+      description:
+        'Create a StoreKit 2 non-consumable transaction that automatic IAP tracking can observe.',
+      run: () => purchaseStoreKitProduct(storeKitProductIds.nonConsumable),
+      getPayloadPreview: () => ({
+        productId: storeKitProductIds.nonConsumable,
+      }),
+    },
+    {
+      id: 'storeKit.purchaseAutoRenewableSubscription',
+      label: 'Buy monthly subscription',
+      apiName: 'StoreKitSandbox.purchase',
+      supportedPlatform: 'ios',
+      description:
+        'Create a StoreKit 2 auto-renewable subscription transaction using the accelerated local test store.',
+      run: () =>
+        purchaseStoreKitProduct(storeKitProductIds.autoRenewableSubscription),
+      getPayloadPreview: () => ({
+        productId: storeKitProductIds.autoRenewableSubscription,
+      }),
+    },
+    {
+      id: 'storeKit.purchaseNonRenewingSubscription',
+      label: 'Buy season pass',
+      apiName: 'StoreKitSandbox.purchase',
+      supportedPlatform: 'ios',
+      description:
+        'Create a StoreKit 2 non-renewing subscription transaction for purchase metadata validation.',
+      run: () =>
+        purchaseStoreKitProduct(storeKitProductIds.nonRenewingSubscription),
+      getPayloadPreview: () => ({
+        productId: storeKitProductIds.nonRenewingSubscription,
+      }),
+    },
+    {
+      id: 'storeKit.restorePurchases',
+      label: 'Restore StoreKit purchases',
+      apiName: 'StoreKitSandbox.restorePurchases',
+      supportedPlatform: 'ios',
+      description:
+        'Sync the local store and return current non-consumable and subscription entitlements.',
+      run: restoreStoreKitPurchases,
       getPayloadPreview: () => ({ platform }),
     },
     {

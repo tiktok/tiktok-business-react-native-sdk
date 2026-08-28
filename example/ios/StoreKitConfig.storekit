@@ -1,0 +1,134 @@
+{
+  "identifier" : "8C2841AE",
+  "nonRenewingSubscriptions" : [
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "B2B602D1",
+      "localizations" : [
+        {
+          "description" : "A three-month sandbox pass for testing purchase reporting.",
+          "displayName" : "Demo Season Pass",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "tiktokbusinessreactnativesdk.example.seasonpass",
+      "referenceName" : "Demo Season Pass",
+      "type" : "NonRenewingSubscription"
+    }
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "08D5B8CB",
+      "localizations" : [
+        {
+          "description" : "A consumable sandbox item for testing purchase reporting.",
+          "displayName" : "Demo Coins",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "tiktokbusinessreactnativesdk.example.coins",
+      "referenceName" : "Demo Coins",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "B0EE2A38",
+      "localizations" : [
+        {
+          "description" : "A non-consumable sandbox item for testing purchase reporting.",
+          "displayName" : "Demo Premium Upgrade",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "tiktokbusinessreactnativesdk.example.premium",
+      "referenceName" : "Demo Premium Upgrade",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "C69F9C44",
+      "localizations" : [
+
+      ],
+      "name" : "Demo Subscription",
+      "subscriptions" : [
+        {
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "E89C90E4",
+          "localizations" : [
+            {
+              "description" : "A monthly sandbox subscription for testing renewals.",
+              "displayName" : "Demo Monthly Subscription",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "tiktokbusinessreactnativesdk.example.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Demo Monthly Subscription",
+          "subscriptionGroupID" : "C69F9C44",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 5,
+    "minor" : 0
+  }
+}

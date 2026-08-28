@@ -256,17 +256,19 @@ export const debugConsoleStyles = StyleSheet.create({
   },
   tabRow: {
     flexDirection: 'row',
-    gap: 20,
+    gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: debugConsoleColors.border,
     paddingBottom: 8,
   },
   tabButton: {
+    flexShrink: 1,
     gap: 8,
     paddingBottom: 2,
   },
   tabText: {
-    fontSize: 15,
+    flexShrink: 1,
+    fontSize: 14,
     color: debugConsoleColors.mutedText,
   },
   tabTextActive: {
