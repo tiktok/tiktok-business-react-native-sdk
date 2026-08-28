@@ -37,11 +37,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Restore version file after setup
+        if: github.ref == 'refs/heads/main'
+        run: git restore --source=HEAD --staged --worktree src/version.ts
+
       - name: Publish production release (main)
         if: github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm release --ci ${{ github.event.inputs.version }}
+        run: >
+          pnpm release --ci ${{ github.event.inputs.version }}
+          --hooks.after:bump="pnpm sync:version && git add src/version.ts"
 
       - name: Publish dev release (non-main)
         if: github.ref != 'refs/heads/main'
