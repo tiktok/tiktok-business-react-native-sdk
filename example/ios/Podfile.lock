@@ -2450,7 +2450,7 @@ PODS:
     - React-utils (= 0.83.0)
     - SocketRocket
   - SocketRocket (0.7.1)
-  - TiktokBusinessReactNativeSdk (0.1.0):
+  - TiktokBusinessReactNativeSdk (0.1.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -2477,9 +2477,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - SocketRocket
-    - TikTokBusinessSDK (= 1.7.1)
+    - TikTokBusinessSDK (= 1.7.2)
     - Yoga
-  - TikTokBusinessSDK (1.7.1)
+  - TikTokBusinessSDK (1.7.2)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2735,7 +2735,7 @@ SPEC CHECKSUMS:
   FBLazyVector: a293a88992c4c33f0aee184acab0b64a08ff9458
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
-  hermes-engine: b439a7a2698a120fd3a2124d2e70b53fc74e83be
+  hermes-engine: 789160426aac4fb1c6b6e29159ed683c2d4ab1a3
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: 2b70c6e3abe00396cefd8913efbf6a2db01a2b36
   RCTRequired: f3540eee8094231581d40c5c6d41b0f170237a81
@@ -2806,8 +2806,8 @@ SPEC CHECKSUMS:
   ReactCodegen: 5b7a4f220d138a12c7dbf95ee816b20ed141ea9b
   ReactCommon: 424cc34cf5055d69a3dcf02f3436481afb8b0f6f
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  TiktokBusinessReactNativeSdk: 2aa6f3424932d09ca7cbc927488d0528ddb27a7a
-  TikTokBusinessSDK: c725de7374647343eef570a23ca7ce1ec8ab833c
+  TiktokBusinessReactNativeSdk: 9b8f0fac6d876afdbb30ce268ac290f0135e4501
+  TikTokBusinessSDK: c8878048daf0c46a0d9e89932359d553ea38096c
   Yoga: 6ca93c8c13f56baeec55eb608577619b17a4d64e
 
 PODFILE CHECKSUM: 2f7fbcba622b51317d7dfa8de49b253713d84c18

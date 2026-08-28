@@ -39,6 +39,17 @@ jest.mock('@tiktok-for-business/react-native-sdk', () => ({
     fetchDeferredDeeplink: jest.fn(),
   },
 }));
+jest.mock('../storeKitSandbox', () => ({
+  loadStoreKitProducts: jest.fn(),
+  purchaseStoreKitProduct: jest.fn(),
+  restoreStoreKitPurchases: jest.fn(),
+  storeKitProductIds: {
+    consumable: 'tiktokbusinessreactnativesdk.example.coins',
+    nonConsumable: 'tiktokbusinessreactnativesdk.example.premium',
+    autoRenewableSubscription: 'tiktokbusinessreactnativesdk.example.monthly',
+    nonRenewingSubscription: 'tiktokbusinessreactnativesdk.example.seasonpass',
+  },
+}));
 import TikTokBusinessSDK from '@tiktok-for-business/react-native-sdk';
 import type {
   EditablePayloads,
@@ -49,6 +60,11 @@ import {
   buildSdkActions,
   requiredActionIds,
 } from '../sdkActions';
+import {
+  loadStoreKitProducts,
+  purchaseStoreKitProduct,
+  restoreStoreKitPurchases,
+} from '../storeKitSandbox';
 
 function createRuntimeConfig(): RuntimeSdkConfig {
   return defaultInitializeConfig;
@@ -69,6 +85,9 @@ function createEditablePayloads(): EditablePayloads {
 }
 
 const mockedSdk = jest.mocked(TikTokBusinessSDK);
+const mockedLoadStoreKitProducts = jest.mocked(loadStoreKitProducts);
+const mockedPurchaseStoreKitProduct = jest.mocked(purchaseStoreKitProduct);
+const mockedRestoreStoreKitPurchases = jest.mocked(restoreStoreKitPurchases);
 
 const defaultDebugState = {
   runtimeConfig: createRuntimeConfig(),
@@ -263,6 +282,53 @@ describe('sdkActions', () => {
     );
   });
 
+  it('runs the example StoreKit sandbox actions with configured products', async () => {
+    mockedLoadStoreKitProducts.mockResolvedValueOnce({
+      source: 'xcodeStoreKitConfiguration',
+      products: [],
+    });
+    mockedPurchaseStoreKitProduct.mockResolvedValue({
+      productId: 'tiktokbusinessreactnativesdk.example.coins',
+      transactionId: '1',
+      state: 'purchased',
+    });
+    mockedRestoreStoreKitPurchases.mockResolvedValueOnce([]);
+
+    const actions = buildSdkActions(defaultDebugState);
+
+    await actions
+      .find((action) => action.id === 'storeKit.loadProducts')
+      ?.run();
+    await actions
+      .find((action) => action.id === 'storeKit.purchaseConsumable')
+      ?.run();
+    await actions
+      .find((action) => action.id === 'storeKit.purchaseNonConsumable')
+      ?.run();
+    await actions
+      .find(
+        (action) => action.id === 'storeKit.purchaseAutoRenewableSubscription'
+      )
+      ?.run();
+    await actions
+      .find(
+        (action) => action.id === 'storeKit.purchaseNonRenewingSubscription'
+      )
+      ?.run();
+    await actions
+      .find((action) => action.id === 'storeKit.restorePurchases')
+      ?.run();
+
+    expect(mockedLoadStoreKitProducts).toHaveBeenCalledTimes(1);
+    expect(mockedPurchaseStoreKitProduct.mock.calls).toEqual([
+      ['tiktokbusinessreactnativesdk.example.coins'],
+      ['tiktokbusinessreactnativesdk.example.premium'],
+      ['tiktokbusinessreactnativesdk.example.monthly'],
+      ['tiktokbusinessreactnativesdk.example.seasonpass'],
+    ]);
+    expect(mockedRestoreStoreKitPurchases).toHaveBeenCalledTimes(1);
+  });
+
   it('logs initialization failures without remapping native errors', async () => {
     const nativeError = { code: 'E_NATIVE', message: 'Native failed.' };
     mockedSdk.initialize.mockRejectedValueOnce(nativeError);
@@ -338,6 +404,12 @@ describe('sdkActions', () => {
     ).toMatchObject({
       apiName: 'trackGooglePlayPurchase',
       supportedPlatform: 'android',
+    });
+    expect(
+      actions.find((action) => action.id === 'storeKit.purchaseConsumable')
+    ).toMatchObject({
+      apiName: 'StoreKitSandbox.purchase',
+      supportedPlatform: 'ios',
     });
   });
 });
