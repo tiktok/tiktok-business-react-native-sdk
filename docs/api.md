@@ -44,7 +44,7 @@ Support status values:
 
 | Platform | Native SDK dependency | Version source | Notes |
 | --- | --- | --- | --- |
-| Android | `com.github.tiktok:tiktok-business-android-sdk` `1.7.0` | `android/build.gradle` | The package also pins Lifecycle `2.8.7`, Billing `7.1.1`, and Install Referrer `2.2`; host apps own repository configuration and conflict resolution. |
+| Android | `com.github.tiktok:tiktok-business-android-sdk` `1.7.1` | `android/build.gradle` | The package also pins Lifecycle `2.8.7`, Billing `7.1.1`, and Install Referrer `2.2`; host apps own repository configuration and conflict resolution. |
 | iOS | `TikTokBusinessSDK` `1.7.1` | `TiktokBusinessReactNativeSdk.podspec` | CocoaPods installs the pinned version. Host apps still own app target setup, ATT copy, and SKAN ownership decisions. |
 
 ## Error behavior
