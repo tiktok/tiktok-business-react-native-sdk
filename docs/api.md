@@ -24,6 +24,7 @@ Support status values:
 | Content events | Supported | `trackContentEvent(eventName, options)` and `TikTokContentEventNames`. |
 | Custom events | Supported | `trackCustomEvent(eventName, options?)`. |
 | In-app ad revenue reporting | Supported | `trackAdRevenueEvent(options)`. |
+| Runtime tracking resume | Supported | `startTrack()` resumes event sending after startup tracking was disabled. |
 | Manual flush | Supported | `flush()`. |
 | Debug mode and log level | Supported | `initialize({ debug })`; disable debug mode and verbose logs before release. |
 | Advanced Matching identify/logout | Supported | `identify(payload)` and `logout()`. The RN layer does not hash, persist, or rewrite email/phone values. |
@@ -33,9 +34,9 @@ Support status values:
 | Android Google Play purchase reporting | Platform-specific | `trackGooglePlayPurchase(payload)` on Android only. |
 | Android install referrer and lifecycle integration | Host-app responsibility | Dependencies are included by package Gradle; host app owns app-level setup and conflict resolution. |
 | Deferred deeplinks | Supported | `fetchDeferredDeeplink()` after successful SDK initialization. |
-| Data sharing after user consent | Not supported | The bridge exposes startup tracking controls but no shared runtime method to resume tracking after consent; host app owns consent UX and policy. |
+| Data sharing after user consent | Supported | `initialize({ disableTrack: true })` can delay startup tracking; `startTrack()` resumes event sending after consent. Host app owns consent UX and policy. |
 | Advertiser ID collection controls | Not supported | Do not add a shared RN abstraction without stable native parity; host app owns Android permissions, iOS ATT timing, and privacy policy. |
-| Pre-consent tracking delay | Not supported | `initialize({ disableTrack: true })` disables tracking at startup, but the bridge does not expose a shared runtime method to resume it. |
+| Pre-consent tracking delay | Supported | `initialize({ disableTrack: true })` disables tracking at startup; `startTrack()` resumes tracking at runtime. |
 | Enhance data postback initialization controls | Supported | `disableEnhancedDataPostbackTrack` maps to the native auto-EDP disable switch, and `setIsLowPerformanceDevice` applies native low-performance-device mode when `true`. |
 | Unity SDK | Out of scope | No React Native bridge work. |
 | Combined TikTok App Events and Pangle SDK | Out of scope | No combined SDK or Pangle migration bridge work. |
@@ -45,7 +46,7 @@ Support status values:
 | Platform | Native SDK dependency | Version source | Notes |
 | --- | --- | --- | --- |
 | Android | `com.github.tiktok:tiktok-business-android-sdk` `1.7.1` | `android/build.gradle` | The package also pins Lifecycle `2.8.7`, Billing `7.1.1`, and Install Referrer `2.2`; host apps own repository configuration and conflict resolution. |
-| iOS | `TikTokBusinessSDK` `1.7.1` | `TiktokBusinessReactNativeSdk.podspec` | CocoaPods installs the pinned version. Host apps still own app target setup, ATT copy, and SKAN ownership decisions. |
+| iOS | `TikTokBusinessSDK` `1.7.2` | `TiktokBusinessReactNativeSdk.podspec` | CocoaPods installs the pinned version. Host apps still own app target setup, ATT copy, and SKAN ownership decisions. |
 
 ## Error behavior
 
@@ -62,6 +63,7 @@ The JavaScript layer does not wrap native failures in a separate SDK-owned error
 | `trackContentEvent(eventName, options)` | Yes | Yes     | iOS `TikTokContentsEvent` subclasses; Android `TTContentsEvent` builders        |
 | `trackCustomEvent(eventName, options?)` | Yes | Yes     | iOS `TikTokBaseEvent`; Android `TTBaseEvent`                                    |
 | `trackAdRevenueEvent(options)`          | Yes | Yes     | iOS `TikTokAdRevenueEvent`; Android `TTAdRevenueEvent`                          |
+| `startTrack()`                          | Yes | Yes     | iOS `setTrackingEnabled:YES`; Android `startTrack`                              |
 | `flush()`                               | Yes | Yes     | iOS `explicitlyFlush`; Android `flush`                                          |
 | `identify(payload)`                     | Yes | Yes     | iOS `identifyWithExternalID...`; Android `identify`                             |
 | `logout()`                              | Yes | Yes     | iOS `logout`; Android `logout`                                                  |
@@ -133,6 +135,23 @@ Initialization controls must be set before initialization because the native SDK
 
 `openLimitedDataUse` is Android-only in the current native bridge; iOS ignores it. `setIsLowPerformanceDevice` is applied by both native bridges when `true`. `disableEnhancedDataPostbackTrack` maps to the native auto-EDP disable behavior.
 
+### Runtime tracking resume
+
+When startup tracking is disabled for an age gate or consent flow, initialize with `disableTrack: true`, then call `startTrack()` after the host app is allowed to send events:
+
+```ts
+await TikTokBusinessSDK.initialize({
+  appId: 'sample-app-id',
+  accessToken: 'sample-access-token',
+  tiktokAppId: ['sample-tiktok-app-id'],
+  disableTrack: true,
+});
+
+await TikTokBusinessSDK.startTrack();
+```
+
+`startTrack()` maps to Android `TikTokBusinessSdk.startTrack()` and iOS `[TikTokBusiness setTrackingEnabled:YES]`. It is intentionally one-way; the shared React Native API does not expose `setTrackingEnabled(boolean)` because the Android native SDK does not provide a matching runtime disable API.
+
 ### iOS SKAN ownership
 
 If an MMP or the host app owns SKAN conversion updates, disable SDK SKAN support before initialization:
@@ -153,6 +172,8 @@ await TikTokBusinessSDK.initialize({
 ### Event constants
 
 `TikTokEventNames` and `TikTokContentEventNames` contain the stable, non-deprecated event names implemented in `src/types.ts`. These constants are convenience exports only: `trackEvent` and `trackCustomEvent` continue to accept arbitrary strings so advertiser apps can send custom or partner-defined events supported by their measurement plan.
+
+`TikTokEventNames.ImpressionLevelAdRevenue` is included for parity with native SDK standard event constants. For ad monetization revenue, prefer `trackAdRevenueEvent(options)` because it uses the dedicated native ad revenue event class on both platforms.
 
 Content event constants include `AddToCart`, `AddToWishlist`, `Checkout`, `Purchase`, and `ViewContent`.
 
@@ -263,7 +284,7 @@ The React Native layer does not hash, persist, or rewrite email or phone values.
 
 ### Privacy and compliance boundary
 
-RN SDK 不收集敏感数据，也不自动改写 email/phone；只透传给原生 SDK，由原生 SDK 按官方行为处理。React Native 层不对 email/phone 做 hash、持久化、normalize 或 rewrite；仅将运行时值传递给原生 SDK，由原生 SDK 处理官方 Advanced Matching。
+The React Native SDK does not collect sensitive data by itself and does not rewrite, normalize, hash, or persist email or phone values. It passes runtime values to the native SDK, which applies the official Advanced Matching behavior.
 
 The host app owns consent timing, user disclosure, and data-sharing policy. This package does not implement a JavaScript consent manager and does not store customer identifiers. Do not pass sensitive data to TikTok unless the host app has determined it is allowed under its applicable policy and terms.
 

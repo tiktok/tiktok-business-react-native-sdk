@@ -115,6 +115,15 @@ class TiktokBusinessReactNativeSdkModule(reactContext: ReactApplicationContext) 
     }
   }
 
+  override fun startTrack(promise: Promise) {
+    try {
+      TikTokBusinessSdk.startTrack()
+      promise.resolve(null)
+    } catch (throwable: Throwable) {
+      promise.rejectWithThrowable(throwable)
+    }
+  }
+
   override fun flush(promise: Promise) {
     try {
       TikTokBusinessSdk.flush()

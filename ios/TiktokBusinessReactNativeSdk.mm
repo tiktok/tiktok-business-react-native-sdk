@@ -163,6 +163,17 @@ static void TBRNSRejectException(RCTPromiseRejectBlock reject, NSException *exce
   }
 }
 
+- (void)startTrack:(RCTPromiseResolveBlock)resolve
+            reject:(RCTPromiseRejectBlock)reject
+{
+  @try {
+    [TikTokBusiness setTrackingEnabled:YES];
+    resolve(nil);
+  } @catch (NSException *exception) {
+    TBRNSRejectException(reject, exception);
+  }
+}
+
 - (void)flush:(RCTPromiseResolveBlock)resolve
        reject:(RCTPromiseRejectBlock)reject
 {

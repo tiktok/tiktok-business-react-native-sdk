@@ -18,6 +18,7 @@ export interface Spec extends TurboModule {
     properties?: CodegenTypes.UnsafeObject
   ): Promise<void>;
   trackAdRevenueEvent(properties: CodegenTypes.UnsafeObject): Promise<void>;
+  startTrack(): Promise<void>;
   flush(): Promise<void>;
   identify(payload: CodegenTypes.UnsafeObject): Promise<void>;
   logout(): Promise<void>;
