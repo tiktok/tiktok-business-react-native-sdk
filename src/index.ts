@@ -5,6 +5,7 @@ export {
   identify,
   initialize,
   logout,
+  startTrack,
   trackAdRevenueEvent,
   trackContentEvent,
   trackCustomEvent,

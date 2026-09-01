@@ -20,6 +20,8 @@
 - (void)trackAdRevenueEvent:(NSDictionary *)properties
                     resolve:(RCTPromiseResolveBlock)resolve
                      reject:(RCTPromiseRejectBlock)reject;
+- (void)startTrack:(RCTPromiseResolveBlock)resolve
+            reject:(RCTPromiseRejectBlock)reject;
 - (void)flush:(RCTPromiseResolveBlock)resolve
        reject:(RCTPromiseRejectBlock)reject;
 - (void)identify:(NSDictionary *)payload

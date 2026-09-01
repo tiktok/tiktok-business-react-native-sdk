@@ -114,6 +114,7 @@ export const TikTokEventName = {
   CreateGroup: 'CreateGroup',
   CreateRole: 'CreateRole',
   GenerateLead: 'GenerateLead',
+  ImpressionLevelAdRevenue: 'ImpressionLevelAdRevenue',
   InAppAdClick: 'InAppAdClick',
   InAppAdImpression: 'InAppAdImpression',
   JoinGroup: 'JoinGroup',
@@ -181,6 +182,7 @@ export interface TikTokBusinessSdk {
     options?: TrackCustomEventOptions
   ): Promise<void>;
   trackAdRevenueEvent(options: TrackAdRevenueEventOptions): Promise<void>;
+  startTrack(): Promise<void>;
   flush(): Promise<void>;
   identify(payload: AdvancedMatchingPayload): Promise<void>;
   logout(): Promise<void>;

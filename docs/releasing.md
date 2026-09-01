@@ -52,11 +52,13 @@ The workflow:
 
 1. Checks out full git history.
 2. Installs pnpm/Node dependencies.
-3. Upgrades npm so OIDC trusted publishing is supported.
+3. Upgrades npm so OIDC trusted publishing is supported, selects the same Xcode version as iOS CI, and installs the Bundler version pinned by `example/Gemfile.lock`.
 4. Runs `pnpm check`.
 5. Configures the GitHub Actions bot identity.
-6. Runs `pnpm release --ci <version>`; the script invokes `release-it` without interactive-only flags, so CI mode automatically accepts the configured publish, commit, tag, push, and GitHub release operations.
-7. `release-it` updates the version, creates the release commit and `v<version>` tag, publishes npm through Trusted Publishing, pushes git changes, and creates the GitHub release. npm's `prepare` lifecycle runs `pnpm build:root` before publication. The release-it npm authentication preflight is disabled because OIDC credentials are minted only during the actual `npm publish` process.
+6. Runs `pnpm release --ci <version>`; after the version bump, declarative release hooks synchronize `src/version.ts`, run CocoaPods to regenerate `example/ios/Podfile.lock`, and verify that no other tracked iOS project file changed.
+7. `release-it` commits `package.json`, `src/version.ts`, and `example/ios/Podfile.lock` together, creates the `v<version>` tag, publishes npm through Trusted Publishing, pushes git changes, and creates the GitHub release. npm's `prepare` lifecycle runs `pnpm build:root` before publication. The release-it npm authentication preflight is disabled because OIDC credentials are minted only during the actual `npm publish` process.
+
+The release job runs on a GitHub-hosted macOS runner because CocoaPods is part of the production version bump. `Podfile.lock`, including its podspec checksums, is generated entirely by CocoaPods. If CocoaPods cannot resolve dependencies or modifies another tracked file under `example/ios`, the release stops before the commit, tag, and npm publication.
 
 ### Non-`main`: development release
 
@@ -106,6 +108,7 @@ Before publishing, verify:
 
 - [ ] Semantic version is correct.
 - [ ] Working tree contains only intended changes.
+- [ ] `example/ios/Podfile.lock` is clean before dispatch; the workflow updates it during the version bump.
 - [ ] `pnpm release:prepare` passes.
 - [ ] `pnpm package:validate` contains only intended files.
 - [ ] Android and iOS example builds pass for native/dependency changes.

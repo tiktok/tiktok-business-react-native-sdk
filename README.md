@@ -12,7 +12,7 @@ This package exposes a typed React Native API over the TikTok Business native iO
 ## Native SDKs
 
 - iOS: [tiktok-business-ios-sdk 1.7.2](https://github.com/tiktok/tiktok-business-ios-sdk)
-- Android: [tiktok-business-android-sdk 1.7.0](https://github.com/tiktok/tiktok-business-android-sdk)
+- Android: [tiktok-business-android-sdk 1.7.1](https://github.com/tiktok/tiktok-business-android-sdk)
 
 ## Install
 
@@ -86,7 +86,11 @@ await TikTokBusinessSDK.initialize({
   disableInstallTrack: true,
   disableLaunchTrack: true,
 });
+
+await TikTokBusinessSDK.startTrack();
 ```
+
+Use `startTrack()` to resume event sending after initialization with `disableTrack: true`. This is a one-way runtime resume API; the shared React Native surface does not expose a runtime tracking-disable setter.
 
 ### iOS SKAN ownership
 
@@ -152,6 +156,8 @@ const deeplink = await TikTokBusinessSDK.fetchDeferredDeeplink();
 Call `fetchDeferredDeeplink()` only after `initialize(config)` succeeds. A result without `url` means no deferred deeplink is available for the current install/session. Host apps still own normal deeplink routing, URI scheme setup, and app-link/universal-link configuration.
 
 Custom event properties pass through to native and may be ignored by the native SDK or TikTok backend if unsupported.
+
+`TikTokEventNames.ImpressionLevelAdRevenue` is exported for parity with native standard event names. Prefer `trackAdRevenueEvent(options)` for in-app ad revenue reporting because it maps to the dedicated native ad revenue event object.
 
 ## Advanced Matching
 

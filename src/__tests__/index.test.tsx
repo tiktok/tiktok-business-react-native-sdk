@@ -22,6 +22,7 @@ jest.mock('../NativeTiktokBusinessReactNativeSdk', () => ({
     trackContentEvent: jest.fn(),
     trackCustomEvent: jest.fn(),
     trackAdRevenueEvent: jest.fn(),
+    startTrack: jest.fn(),
     identify: jest.fn(),
     logout: jest.fn(),
     flush: jest.fn(),
@@ -64,6 +65,7 @@ describe('public sdk api', () => {
         trackContentEvent: expect.any(Function),
         trackCustomEvent: expect.any(Function),
         trackAdRevenueEvent: expect.any(Function),
+        startTrack: expect.any(Function),
         flush: expect.any(Function),
         identify: expect.any(Function),
         logout: expect.any(Function),
@@ -89,6 +91,7 @@ describe('public sdk api', () => {
     expect(typeof sdkExports.trackContentEvent).toBe('function');
     expect(typeof sdkExports.trackCustomEvent).toBe('function');
     expect(typeof sdkExports.trackAdRevenueEvent).toBe('function');
+    expect(typeof sdkExports.startTrack).toBe('function');
     expect(typeof sdkExports.flush).toBe('function');
     expect(typeof sdkExports.identify).toBe('function');
     expect(typeof sdkExports.logout).toBe('function');
@@ -116,6 +119,15 @@ describe('public sdk api', () => {
         Checkout: 'Checkout',
         Purchase: 'Purchase',
         ViewContent: 'ViewContent',
+      })
+    );
+  });
+
+  it('exports documented standard event constants', () => {
+    expect(sdkExports.TikTokEventNames).toEqual(
+      expect.objectContaining({
+        ImpressionLevelAdRevenue: 'ImpressionLevelAdRevenue',
+        LaunchApp: 'LaunchApp',
       })
     );
   });
@@ -411,6 +423,15 @@ describe('public sdk api', () => {
       currency: 'USD',
       adUnit: 'banner-home',
     });
+  });
+
+  it('delegates startTrack to native without exposing a boolean setter', async () => {
+    nativeModule.startTrack.mockResolvedValueOnce();
+
+    await expect(TikTokBusinessSDK.startTrack()).resolves.toBeUndefined();
+
+    expect(nativeModule.startTrack).toHaveBeenCalledTimes(1);
+    expect('setTrackingEnabled' in TikTokBusinessSDK).toBe(false);
   });
 
   it('delegates flush, identify, and logout', async () => {

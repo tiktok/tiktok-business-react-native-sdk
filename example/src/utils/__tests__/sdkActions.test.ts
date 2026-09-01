@@ -31,6 +31,7 @@ jest.mock('@tiktok-for-business/react-native-sdk', () => ({
     trackContentEvent: jest.fn(),
     trackCustomEvent: jest.fn(),
     trackAdRevenueEvent: jest.fn(),
+    startTrack: jest.fn(),
     identify: jest.fn(),
     flush: jest.fn(),
     logout: jest.fn(),
@@ -185,6 +186,7 @@ describe('sdkActions', () => {
     mockedSdk.trackContentEvent.mockResolvedValueOnce();
     mockedSdk.trackCustomEvent.mockResolvedValueOnce();
     mockedSdk.trackAdRevenueEvent.mockResolvedValueOnce();
+    mockedSdk.startTrack.mockResolvedValueOnce();
     mockedSdk.identify.mockResolvedValueOnce();
     mockedSdk.flush.mockResolvedValueOnce();
     mockedSdk.logout.mockResolvedValueOnce();
@@ -210,6 +212,7 @@ describe('sdkActions', () => {
     await actions
       .find((action) => action.id === 'root.trackAdRevenueEvent')
       ?.run();
+    await actions.find((action) => action.id === 'root.startTrack')?.run();
     await actions.find((action) => action.id === 'root.identify')?.run();
     await actions.find((action) => action.id === 'root.flush')?.run();
     await actions.find((action) => action.id === 'root.logout')?.run();
@@ -236,6 +239,7 @@ describe('sdkActions', () => {
     expect(mockedSdk.trackAdRevenueEvent).toHaveBeenCalledWith(
       defaultTrackAdRevenueEventProperties
     );
+    expect(mockedSdk.startTrack).toHaveBeenCalledTimes(1);
     expect(mockedSdk.identify).toHaveBeenCalledWith(defaultIdentifyPayload);
     expect(mockedSdk.flush).toHaveBeenCalledTimes(1);
     expect(mockedSdk.logout).toHaveBeenCalledTimes(1);

@@ -57,6 +57,7 @@ Root APIs:
 - `trackContentEvent(eventName, options)`
 - `trackCustomEvent(eventName, options?)`
 - `trackAdRevenueEvent(options)`
+- `startTrack()`
 - `identify(payload)`
 - `flush()`
 - `logout()`
@@ -81,7 +82,7 @@ Shared root methods:
 1. Open the example app and switch between `Config`, `Actions`, `Identity`, and the current platform tab (`iOS Platform` or `Android Platform`).
 2. Enter runtime SDK config values in `Config`.
 3. Run `initialize` first from `Actions`.
-4. In `Actions`, follow the root API path in order: `trackEvent`, `trackContentEvent`, `trackCustomEvent`, then `trackAdRevenueEvent`.
+4. In `Actions`, follow the root API path in order: `trackEvent`, `trackContentEvent`, `trackCustomEvent`, then `trackAdRevenueEvent`. Use `startTrack` after initialization when validating `disableTrack`.
 5. Open `Identity` to edit the identify payload and run `identify`, `flush`, or `logout`.
 6. Open `iOS Platform` or `Android Platform` to run platform-specific root methods.
 
