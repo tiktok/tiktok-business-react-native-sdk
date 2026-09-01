@@ -26,6 +26,7 @@ export const requiredActionIds = [
   'root.trackContentEvent',
   'root.trackCustomEvent',
   'root.trackAdRevenueEvent',
+  'root.startTrack',
   'root.identify',
   'root.flush',
   'root.logout',
@@ -49,6 +50,7 @@ export const actionPlatformMap: Record<
   'root.trackContentEvent': 'both',
   'root.trackCustomEvent': 'both',
   'root.trackAdRevenueEvent': 'both',
+  'root.startTrack': 'both',
   'root.identify': 'both',
   'root.flush': 'both',
   'root.logout': 'both',
@@ -155,6 +157,16 @@ export function buildSdkActions({
         ),
       getPayloadPreview: () =>
         adRevenuePayload ?? editablePayloads.trackAdRevenueEventProperties,
+    },
+    {
+      id: 'root.startTrack',
+      label: 'Start tracking',
+      apiName: 'startTrack',
+      supportedPlatform: 'both',
+      description:
+        'Resume event sending after initialize was called with disableTrack enabled.',
+      run: () => TikTokBusinessSDK.startTrack(),
+      getPayloadPreview: () => ({ platform }),
     },
     {
       id: 'root.identify',

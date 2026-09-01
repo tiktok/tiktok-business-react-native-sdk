@@ -38,6 +38,7 @@
     "example:android": "turbo run android --filter=tiktok-business-react-native-sdk-example --continue=never",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "sync:version": "node scripts/sync-version.cjs",
+    "sync:ios-lockfile": "cd example && bundle _${BUNDLER_VERSION}_ exec pod install --project-directory=ios",
     "prepare": "pnpm build:root",
     "typecheck": "turbo run typecheck:root --continue=never",
     "lint": "turbo run lint:root --continue=never",
@@ -159,6 +160,13 @@
     ]
   },
   "release-it": {
+    "hooks": {
+      "after:bump": [
+        "pnpm sync:version",
+        "pnpm sync:ios-lockfile",
+        "git diff --exit-code -- example/ios ':(exclude)example/ios/Podfile.lock'"
+      ]
+    },
     "git": {
       "commitMessage": "chore: release ${version}",
       "tagName": "v${version}"

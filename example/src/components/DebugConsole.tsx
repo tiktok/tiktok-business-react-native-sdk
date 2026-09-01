@@ -520,6 +520,7 @@ export function DebugConsole() {
             </View>
             <View style={debugConsoleStyles.actionGroup}>
               {renderAction('root.initialize')}
+              {renderAction('root.startTrack')}
             </View>
 
             <View style={debugConsoleStyles.sectionHeader}>
