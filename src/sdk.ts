@@ -96,6 +96,14 @@ export const trackAdRevenueEvent = (
 };
 
 /**
+ * Resumes event sending after initialization with startup tracking disabled.
+ * @returns A promise that resolves after the native SDK accepts the request.
+ */
+export const startTrack = (): Promise<void> => {
+  return NativeTiktokBusinessReactNativeSdk.startTrack();
+};
+
+/**
  * Flushes queued events through the native SDK when supported.
  * @returns A promise that resolves after the native flush request completes.
  */
@@ -136,6 +144,7 @@ const TikTokBusinessSDK: TikTokBusinessSdk = {
   trackContentEvent,
   trackCustomEvent,
   trackAdRevenueEvent,
+  startTrack,
   flush,
   identify,
   logout,

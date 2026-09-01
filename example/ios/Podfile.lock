@@ -2450,7 +2450,7 @@ PODS:
     - React-utils (= 0.83.0)
     - SocketRocket
   - SocketRocket (0.7.1)
-  - TiktokBusinessReactNativeSdk (0.1.1):
+  - TiktokBusinessReactNativeSdk (0.1.2):
     - boost
     - DoubleConversion
     - fast_float
@@ -2806,7 +2806,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 5b7a4f220d138a12c7dbf95ee816b20ed141ea9b
   ReactCommon: 424cc34cf5055d69a3dcf02f3436481afb8b0f6f
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
-  TiktokBusinessReactNativeSdk: 9b8f0fac6d876afdbb30ce268ac290f0135e4501
+  TiktokBusinessReactNativeSdk: 01ea42549ca2e68c347b20fe9afe0143997d9e2f
   TikTokBusinessSDK: c8878048daf0c46a0d9e89932359d553ea38096c
   Yoga: 6ca93c8c13f56baeec55eb608577619b17a4d64e
 

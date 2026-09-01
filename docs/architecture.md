@@ -28,7 +28,7 @@ The JavaScript layer owns typed public names, light normalization, and wrong-pla
 
 The default SDK object and named exports expose:
 
-- Shared: `initialize`, `trackEvent`, `trackContentEvent`, `trackCustomEvent`, `trackAdRevenueEvent`, `flush`, `identify`, `logout`, `fetchDeferredDeeplink`
+- Shared: `initialize`, `trackEvent`, `trackContentEvent`, `trackCustomEvent`, `trackAdRevenueEvent`, `startTrack`, `flush`, `identify`, `logout`, `fetchDeferredDeeplink`
 - iOS-only: `requestTrackingAuthorization`, `trackStoreKit2PurchaseFailed`
 - Android-only: `trackGooglePlayPurchase`
 
@@ -53,6 +53,7 @@ Public APIs must map to confirmed native SDK capabilities; the package does not 
 
 - `tiktokAppId: string[]` is normalized to the native SDK's single string representation.
 - Startup tracking, debug, EDP, limited-data-use, performance, and iOS settings are applied before native initialization.
+- `startTrack` resumes event sending after startup tracking was disabled; the shared API does not expose a runtime tracking-disable setter without native parity.
 - Standard/custom/content/ad-revenue APIs construct corresponding native event objects.
 - Advanced Matching values pass through to native code; the React Native layer does not hash or persist email/phone data.
 - Deferred deeplink calls resolve to a small cross-platform result object.
