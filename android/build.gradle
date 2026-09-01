@@ -4,7 +4,7 @@ buildscript {
     minSdkVersion: 24,
     compileSdkVersion: 36,
     targetSdkVersion: 36,
-    tiktokBusinessSdkVersion: "1.7.0",
+    tiktokBusinessSdkVersion: "1.7.1",
     lifecycleVersion: "2.8.7",
     billingVersion: "7.1.1",
     installReferrerVersion: "2.2"

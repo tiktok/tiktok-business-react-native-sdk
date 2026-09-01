@@ -12,7 +12,7 @@ This package exposes a typed React Native API over the TikTok Business native iO
 ## Native SDKs
 
 - iOS: [tiktok-business-ios-sdk 1.7.2](https://github.com/tiktok/tiktok-business-ios-sdk)
-- Android: [tiktok-business-android-sdk 1.7.0](https://github.com/tiktok/tiktok-business-android-sdk)
+- Android: [tiktok-business-android-sdk 1.7.1](https://github.com/tiktok/tiktok-business-android-sdk)
 
 ## Install
 

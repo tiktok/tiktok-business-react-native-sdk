@@ -64,7 +64,7 @@ cd example/android
 ./gradlew :app:dependencies --configuration debugRuntimeClasspath
 ```
 
-Check JitPack access, compile/target SDK compatibility, Java 8 support, Lifecycle, Google Play Billing, Install Referrer, and R8/Proguard rules. The package currently declares Android TikTok Business SDK `1.7.0`, Lifecycle `2.8.7`, Billing `7.1.1`, and Install Referrer `2.2`.
+Check JitPack access, compile/target SDK compatibility, Java 8 support, Lifecycle, Google Play Billing, Install Referrer, and R8/Proguard rules. The package currently declares Android TikTok Business SDK `1.7.1`, Lifecycle `2.8.7`, Billing `7.1.1`, and Install Referrer `2.2`.
 
 ## Android emulator HTTPS proxy
 

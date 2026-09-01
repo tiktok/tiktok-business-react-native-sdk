@@ -1,6 +1,6 @@
 {
   "name": "@tiktok-for-business/react-native-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "TikTok Business React Native SDK",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
