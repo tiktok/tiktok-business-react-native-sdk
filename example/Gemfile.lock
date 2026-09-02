@@ -162,8 +162,5 @@ CHECKSUMS
   tzinfo (2.0.6) sha256=8daf828cc77bcf7d63b0e3bdb6caa47e2272dcfaf4fbfe46f8c3a9df087a829b
   xcodeproj (1.28.1) sha256=6f12670f00739d9817ca27ac89d6ef01cc86050e22a0bc08a3131487e5b5cddc
 
-RUBY VERSION
-  ruby 4.0.6
-
 BUNDLED WITH
   4.0.16

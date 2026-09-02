@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   release:
-    runs-on: ${{ github.ref == 'refs/heads/main' && 'macos-latest' || 'ubuntu-latest' }}
+    runs-on: macos-latest
     env:
       XCODE_VERSION: 26
 
@@ -38,13 +38,11 @@ jobs:
         run: pnpm check
 
       - name: Use appropriate Xcode version
-        if: github.ref == 'refs/heads/main'
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
       - name: Install Bundler
-        if: github.ref == 'refs/heads/main'
         working-directory: example
         run: |
           BUNDLER_VERSION=$(ruby -e "lock = File.read('Gemfile.lock'); puts lock[/BUNDLED WITH\s+([0-9.]+)/m, 1]")
@@ -54,7 +52,6 @@ jobs:
           echo "BUNDLE_PATH=$RUNNER_TEMP/bundle" >> "$GITHUB_ENV"
 
       - name: Install Ruby dependencies
-        if: github.ref == 'refs/heads/main'
         working-directory: example
         run: bundle _${BUNDLER_VERSION}_ install --jobs 4 --retry 3
 
@@ -65,7 +62,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Verify clean working tree before release
-        if: github.ref == 'refs/heads/main'
         run: |
           STATUS=$(git status --short --untracked-files=all)
           if [[ -n "$STATUS" ]]; then
@@ -75,22 +71,22 @@ jobs:
           fi
           echo "Working tree is clean."
 
-      - name: Publish production release (main)
-        if: github.ref == 'refs/heads/main'
+      - name: Publish release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_VERSION: ${{ github.event.inputs.version }}
-        run: pnpm release --ci "$RELEASE_VERSION"
-
-      - name: Publish dev release (non-main)
-        if: github.ref != 'refs/heads/main'
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
-          SHA=$(git rev-parse --short HEAD)
-          BASE_VERSION=$(node -p "require('./package.json').version")
-          DEV_VERSION="${BASE_VERSION}-dev.${SHA}"
+          RELEASE_ARGS=(--ci)
 
-          echo "Publishing dev version: $DEV_VERSION (tag: dev)"
+          if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            RELEASE_VERSION="$INPUT_VERSION"
+          else
+            SHA=$(git rev-parse --short HEAD)
+            BASE_VERSION=$(node -p "require('./package.json').version")
+            DEV_VERSION="${BASE_VERSION}-dev.${SHA}"
+            RELEASE_VERSION="$DEV_VERSION"
+            RELEASE_ARGS+=(--git=false --github=false --npm.tag=dev)
+          fi
 
-          npm version "$DEV_VERSION" --no-git-tag-version
-          pnpm build
-          npm publish --tag dev
+          echo "Publishing version: $RELEASE_VERSION"
+          pnpm release "$RELEASE_VERSION" "${RELEASE_ARGS[@]}"
