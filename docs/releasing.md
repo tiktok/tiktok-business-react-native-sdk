@@ -52,13 +52,13 @@ The workflow:
 
 1. Checks out full git history.
 2. Installs pnpm/Node dependencies.
-3. Upgrades npm so OIDC trusted publishing is supported, selects the same Xcode version as iOS CI, and installs the Bundler version pinned by `example/Gemfile.lock`.
-4. Runs `pnpm check`.
+3. Upgrades npm so OIDC trusted publishing is supported and runs `pnpm check`.
+4. Selects the same Xcode version as iOS CI and installs the Bundler version pinned by `example/Gemfile.lock`. Ruby gems are installed in frozen mode under the runner's temporary directory, so setup cannot rewrite the lockfile or create repository-local Bundler configuration.
 5. Configures the GitHub Actions bot identity.
 6. Runs `pnpm release --ci <version>`; after the version bump, declarative release hooks synchronize `src/version.ts`, run CocoaPods to regenerate `example/ios/Podfile.lock`, and verify that no other tracked iOS project file changed.
 7. `release-it` commits `package.json`, `src/version.ts`, and `example/ios/Podfile.lock` together, creates the `v<version>` tag, publishes npm through Trusted Publishing, pushes git changes, and creates the GitHub release. npm's `prepare` lifecycle runs `pnpm build:root` before publication. The release-it npm authentication preflight is disabled because OIDC credentials are minted only during the actual `npm publish` process.
 
-The release job runs on a GitHub-hosted macOS runner because CocoaPods is part of the production version bump. `Podfile.lock`, including its podspec checksums, is generated entirely by CocoaPods. If CocoaPods cannot resolve dependencies or modifies another tracked file under `example/ios`, the release stops before the commit, tag, and npm publication.
+Production releases run on a GitHub-hosted macOS runner because CocoaPods is part of the version bump; development releases use an Ubuntu runner. `Podfile.lock`, including its podspec checksums, is generated entirely by CocoaPods. If setup dirties the repository, CocoaPods cannot resolve dependencies, or CocoaPods modifies another tracked file under `example/ios`, the release stops before the commit, tag, and npm publication. Release workflow runs are serialized so two publications cannot overlap.
 
 ### Non-`main`: development release
 
