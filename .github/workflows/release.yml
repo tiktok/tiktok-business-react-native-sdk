@@ -42,12 +42,6 @@ jobs:
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # master
-        with:
-          ruby-version: '4.0.6'
-          bundler: none
-
       - name: Install Bundler
         working-directory: example
         run: |

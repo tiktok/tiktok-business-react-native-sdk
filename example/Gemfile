@@ -1,7 +1,5 @@
 source 'https://rubygems.org'
 
-ruby '4.0.6'
-
 # Exclude problematic versions of cocoapods and activesupport that causes build failures.
 gem 'cocoapods', '>= 1.17.0'
 gem 'activesupport', '>= 6.1.7.5', '!= 7.1.0'
