@@ -44,7 +44,7 @@
 
 | 平台 | 原生 SDK 依赖 | 版本来源 | 说明 |
 | --- | --- | --- | --- |
-| Android | `com.github.tiktok:tiktok-business-android-sdk` `1.7.1` | `android/build.gradle` | 包内还固定 Lifecycle `2.8.7`、Billing `7.1.1` 和 Install Referrer `2.2`；宿主 App 负责仓库配置和冲突处理。 |
+| Android | `com.github.tiktok:tiktok-business-android-sdk` `1.7.1` | `android/build.gradle` | 包内还固定 Lifecycle `2.8.7`、Billing `8.0.0` 和 Install Referrer `2.2`；宿主 App 负责仓库配置和冲突处理。 |
 | iOS | `TikTokBusinessSDK` `1.7.2` | `TiktokBusinessReactNativeSdk.podspec` | CocoaPods 安装固定版本；宿主 App 仍负责 app target、ATT 文案和 SKAN 归属。 |
 
 ## 错误行为
