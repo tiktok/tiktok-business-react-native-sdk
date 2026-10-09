@@ -163,7 +163,7 @@ jobs:
 
       - name: Use appropriate Xcode version
         if: env.turbo_cache_hit != 1
-        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        uses: ./.github/actions/setup-xcode
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
@@ -191,13 +191,18 @@ jobs:
           bundle _${BUNDLER_VERSION}_ config set --local path vendor/bundle
           bundle _${BUNDLER_VERSION}_ install --jobs 4 --retry 3
           LOCKED_HERMES_CHECKSUM=$(ruby -ne 'puts $1 if $_ =~ /^  hermes-engine: ([0-9a-f]+)$/' ios/Podfile.lock)
+          if [[ -z "$LOCKED_HERMES_CHECKSUM" ]]; then
+            echo "::error::Unable to read the locked Hermes checksum."
+            exit 1
+          fi
           bundle _${BUNDLER_VERSION}_ exec pod install --project-directory=ios
           LOCKED_HERMES_CHECKSUM="$LOCKED_HERMES_CHECKSUM" ruby -e '
             path = "ios/Podfile.lock"
             lockfile = File.read(path)
-            updated = lockfile.sub(/^  hermes-engine: [0-9a-f]+$/, "  hermes-engine: #{ENV.fetch("LOCKED_HERMES_CHECKSUM")}")
-            abort "Unable to normalize the Hermes checksum" if updated == lockfile
-            File.write(path, updated)
+            pattern = /^  hermes-engine: [0-9a-f]+$/
+            abort "Unable to find the generated Hermes checksum" unless lockfile.match?(pattern)
+            updated = lockfile.sub(pattern, "  hermes-engine: #{ENV.fetch("LOCKED_HERMES_CHECKSUM")}")
+            File.write(path, updated) unless updated == lockfile
           '
           git diff --exit-code -- ios/Podfile.lock || {
             echo "Podfile.lock changed beyond the expected machine-specific Hermes checksum."

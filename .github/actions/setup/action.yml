@@ -4,17 +4,29 @@ description: Setup Node.js and install dependencies
 runs:
   using: composite
   steps:
-    - name: Install pnpm
-      uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
-      with:
-        run_install: false
-
     - name: Setup Node.js
       uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
       with:
         node-version-file: .nvmrc
-        cache: pnpm
-        cache-dependency-path: pnpm-lock.yaml
+
+    - name: Enable pnpm
+      id: pnpm
+      shell: bash
+      run: |
+        PNPM_BIN_DIR="$RUNNER_TEMP/corepack-bin"
+        mkdir -p "$PNPM_BIN_DIR"
+        corepack enable --install-directory "$PNPM_BIN_DIR" pnpm
+        echo "$PNPM_BIN_DIR" >> "$GITHUB_PATH"
+        "$PNPM_BIN_DIR/pnpm" --version
+        echo "store-path=$("$PNPM_BIN_DIR/pnpm" store path --silent)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache pnpm store
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ${{ steps.pnpm.outputs.store-path }}
+        key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-pnpm-
 
     - name: Install dependencies
       shell: bash
